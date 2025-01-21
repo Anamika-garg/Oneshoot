@@ -12,7 +12,7 @@ export default function Hero() {
       {/* Glowing effect that extends behind the navbar */}
       <div className='absolute top-0 left-0 right-0 h-[150vh] pointer-events-none'>
         <div className='absolute top-1/3 right-0 transform -translate-x-1/2 -translate-y-1/2'>
-          <div className='w-[300px] h-[220px] rounded-full bg-orange blur-[200px] opacity-60' />
+          <div className='w-[340px] h-[420px] rounded-full bg-orange blur-[300px] opacity-80' />
         </div>
       </div>
 

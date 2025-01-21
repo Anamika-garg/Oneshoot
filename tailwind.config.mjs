@@ -20,6 +20,7 @@ const config = {
       fontFamily: {
         manrope: "var(--font-manrope)",
         inter: "var(--font-inter)",
+        montserrat: "var(--font-montserrat)",
       },
       borderRadius: {
         lg: "var(--radius)",

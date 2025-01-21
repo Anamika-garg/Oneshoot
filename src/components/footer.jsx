@@ -1,41 +1,49 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export function Footer() {
   return (
-    <footer className='bg-black border-t border-white/10 py-12'>
+    <footer className='bg-transparent py-12'>
       <div className='container px-4'>
         <div className='flex flex-col md:flex-row justify-between items-center'>
-          <div className='mb-6 md:mb-0'>
-            <Link href='/' className='text-2xl font-bold text-white'>
-              OneShot
+          <div className='mb-6 md:mb-0 max-w-xl'>
+            <Link href='/' className='text-white text-2xl font-bold'>
+              <Image
+                src='/logo.svg'
+                alt='Logo'
+                width={220}
+                height={50}
+                priority
+                className='w-full max-w-xl'
+              />
             </Link>
-            <p className='text-sm text-white/60 mt-2'>
-              © 2024 OneShot. All rights reserved
+            <p className='text-base font-light text-white/65 mt-2'>
+              © {new Date().getFullYear()} OneShot. All rights reserved
             </p>
           </div>
 
-          <nav className='flex gap-6'>
+          <nav className='flex gap-6 font-manrope'>
             <Link
               href='/'
-              className='text-sm text-white/60 hover:text-white transition-colors'
+              className='text-lg text-white hover:text-white transition-colors'
             >
               Home
             </Link>
             <Link
               href='/products'
-              className='text-sm text-white/60 hover:text-white transition-colors'
+              className='text-lg text-white hover:text-white transition-colors'
             >
               Products
             </Link>
             <Link
               href='/vouchers'
-              className='text-sm text-white/60 hover:text-white transition-colors'
+              className='text-lg text-white hover:text-white transition-colors'
             >
               Vouchers
             </Link>
             <Link
               href='/faq'
-              className='text-sm text-white/60 hover:text-white transition-colors'
+              className='text-lg text-white hover:text-white transition-colors'
             >
               FAQ
             </Link>

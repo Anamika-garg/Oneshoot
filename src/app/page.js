@@ -5,18 +5,20 @@ import { Stats } from "@/components/stats";
 import { ContactForm } from "@/components/contact-form";
 import { Footer } from "@/components/footer";
 import Hero from "@/components/hero";
+import Feedback from "@/components/feedback";
 
 export default function Home() {
   return (
-    <div className='min-h-screen bg-black'>
-      
-      <main>
+    <div className='min-h-screen '>
+      <main className="overflow-hidden">
         <Hero />
         <ProductGrid />
         <Stats />
+        <Feedback />
         <ContactForm />
+        {/* <Footer /> */}
       </main>
-      <Footer />
+    
     </div>
   );
 }

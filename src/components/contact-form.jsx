@@ -18,49 +18,54 @@ export function ContactForm() {
     console.log(formData);
   };
 
+  const inputClasses =
+    "bg-[#1F1F1E] border-none text-white placeholder:text-orange/40 focus-visible:ring-1 focus-visible:ring-orange focus-visible:ring-offset-0 focus:outline-none transition-all duration-200";
+
   return (
-    <section className='py-20 bg-black'>
-      <div className='container px-4'>
-        <div className='max-w-xl mx-auto'>
-          <h2 className='text-3xl font-bold text-white mb-8'>
+    <section className='font-manrope relative '>
+      <div className='container px-4 mx-auto pt-10 pb-20'>
+        <div className='flex items-start justify-between relative z-10'>
+          <h2 className='text-5xl font-extrabold text-white mb-8 max-w-md'>
             STILL HAVE QUESTIONS OR NEED HELP?
           </h2>
 
-          <form onSubmit={handleSubmit} className='space-y-6'>
-            <Input
-              placeholder='Your Name'
-              className='bg-zinc-900 border-white/10 text-white'
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-            />
-            <Input
-              type='email'
-              placeholder='Email Address'
-              className='bg-zinc-900 border-white/10 text-white'
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-            />
-            <Textarea
-              placeholder='Additional Comment'
-              className='bg-zinc-900 border-white/10 text-white'
-              value={formData.message}
-              onChange={(e) =>
-                setFormData({ ...formData, message: e.target.value })
-              }
-            />
-            <Button
-              type='submit'
-              className='w-full bg-yellow-500 hover:bg-yellow-400 text-black'
-            >
-              SEND
-            </Button>
+          <form
+            onSubmit={handleSubmit}
+            className='space-y-6 max-w-md w-full rounded-[18px] bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart p-[1px]'
+          >
+            <div className='bg-black rounded-[17px] p-8 space-y-6 flex flex-col items-center'>
+              <h3 className='text-center text-white text-xl'>
+                Fill out the form below to connect with one of our wealth
+                management experts.
+              </h3>
+              <Input
+                placeholder='Telegram Name'
+                className={inputClasses}
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+              />
+
+              <Textarea
+                placeholder='Additional Comment'
+                className={inputClasses}
+                value={formData.message}
+                onChange={(e) =>
+                  setFormData({ ...formData, message: e.target.value })
+                }
+              />
+              <Button
+                type='submit'
+                className='w-full max-w-32 bg-gradient-to-b from-gradientStart to-gradientMid text-black'
+              >
+                SEND
+              </Button>
+            </div>
           </form>
         </div>
       </div>
+      <div className='absolute bottom-10  -right-20 h-[340px] w-[320px]  rounded-full blur-[200px] pointer-events-none bg-orange '></div>
     </section>
   );
 }
