@@ -1,5 +1,8 @@
+import { createClient } from "./supabase/client";
+
 export const auth = {
   signUp: async (email, password, name) => {
+    const supabase = createClient();
     // Check if the email is already registered
     const { data: existingUser, error: fetchError } = await supabase
       .from("users")

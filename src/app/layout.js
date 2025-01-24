@@ -1,7 +1,7 @@
 import { Manrope, Inter, Montserrat } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/header";
-import { Toaster } from "react-hot-toast";
+
 import { Footer } from "@/components/footer";
 import { AppProvider } from "./AppProvider";
 

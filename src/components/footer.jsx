@@ -5,7 +5,7 @@ export function Footer() {
   return (
     <footer className='bg-transparent py-12'>
       <div className='container px-4'>
-        <div className='flex flex-col md:flex-row justify-between items-center'>
+        <div className='flex flex-col-reverse md:flex-row justify-between items-start md:items-center gap-8'>
           <div className='mb-6 md:mb-0 max-w-xl'>
             <Link href='/' className='text-white text-2xl font-bold'>
               <Image
@@ -22,7 +22,7 @@ export function Footer() {
             </p>
           </div>
 
-          <nav className='flex gap-6 font-manrope'>
+          <nav className='flex gap-6 font-manrope flex-col md:flex-row items-start'>
             <Link
               href='/'
               className='text-lg text-white hover:text-white transition-colors'

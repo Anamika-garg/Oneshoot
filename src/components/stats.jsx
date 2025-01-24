@@ -2,28 +2,30 @@ export function Stats() {
   return (
     <section className='py-20 relative'>
       <div className='container px-4 mx-auto'>
-        <h2 className='text-xl font-manrope uppercase font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent mb-2'>
+        <h2 className='text-2xl md:text-xl font-manrope uppercase font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent mb-4 md:mb-2'>
           Why Go with Us
         </h2>
-        <div className='flex flex-col md:flex-row justify-between items-center'>
-          <div className='flex flex-col gap-16 max-w-2xl w-full py-10'>
-            <p className='text-3xl font-bold text-white tracking-wider font-manrope'>
+        <div className='flex flex-col md:flex-row justify-between items-start md:items-center'>
+          <div className='flex flex-col gap-8 md:gap-16 max-w-2xl w-full py-10'>
+            <p className='text-2xl md:text-3xl font-bold text-white tracking-wider font-manrope'>
               At OneShot, we are dedicated to delivering an exceptional customer
-              experience, ensuring maximum value for your investment.{" "}
+              experience, ensuring maximum value for your investment.
             </p>
             <p className='text-base font-light text-white tracking-wider font-manrope'>
               With a focus on excellence, we provide only high-quality content
               and fast, reliable support as your trusted partner.
             </p>
           </div>
-          <div className='flex flex-col gap-14 max-w-2xl w-full items-end'>
-            <div className=' flex items-center gap-5'>
+          <div className='flex flex-col gap-10 md:gap-14 max-w-2xl w-full items-end  mt-8 md:mt-0'>
+            {/* Feature Item 1 */}
+            <div className='flex items-center max-w-2xl gap-4 md:gap-5'>
               <svg
                 width='60'
                 height='60'
                 viewBox='0 0 60 60'
                 fill='none'
                 xmlns='http://www.w3.org/2000/svg'
+                className='flex-shrink-0'
               >
                 <rect
                   width='60'
@@ -37,17 +39,19 @@ export function Stats() {
                   fill='#E39530'
                 />
               </svg>
-              <p className='text-xl font-medium text-white tracking-wider font-manrope max-w-56'>
+              <p className='text-lg md:text-xl font-medium text-white tracking-wider font-manrope max-w-56 '>
                 High-Quality Content
               </p>
             </div>
-            <div className=' flex items-center gap-5'>
+            {/* Feature Item 2 */}
+            <div className='flex items-center justify-start gap-4  md:gap-5'>
               <svg
                 width='60'
                 height='60'
                 viewBox='0 0 60 60'
                 fill='none'
                 xmlns='http://www.w3.org/2000/svg'
+                className='flex-shrink-0'
               >
                 <rect
                   width='60'
@@ -64,17 +68,19 @@ export function Stats() {
                 />
               </svg>
 
-              <p className='text-xl font-medium text-white tracking-wider font-manrope max-w-56'>
+              <p className='text-lg md:text-xl font-medium text-white tracking-wider font-manrope max-w-56 '>
                 Fast and Responsive Support
               </p>
             </div>
-            <div className=' flex items-center gap-5'>
+            {/* Feature Item 3 */}
+            <div className='flex justify-start items-center gap-4 max-w-2xl md:gap-5'>
               <svg
                 width='60'
                 height='60'
                 viewBox='0 0 60 60'
                 fill='none'
                 xmlns='http://www.w3.org/2000/svg'
+                className='flex-shrink-0'
               >
                 <rect
                   width='60'
@@ -89,34 +95,34 @@ export function Stats() {
                 />
               </svg>
 
-              <p className='text-xl font-medium text-white tracking-wider font-manrope max-w-56'>
+              <p className='text-lg md:text-xl font-medium text-white tracking-wider font-manrope max-w-56 '>
                 Exceptional Customer Experience
               </p>
             </div>
           </div>
         </div>
-        <div className=' flex items-center gap-x-24 mx-auto justify-center mt-24'>
-          <div className='font-inter text-4xl font-extrabold text-white tracking-wider flex items-center gap-4'>
-            3000+{" "}
-            <span className='text-xl font-manrope uppercase font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent pt-1'>
+        <div className='flex flex-col md:flex-row items-center gap-y-8 md:gap-x-24 mx-auto justify-center mt-16 md:mt-24'>
+          <div className='font-inter text-3xl md:text-4xl font-extrabold text-white tracking-wider flex items-center gap-3 md:gap-4'>
+            3000+
+            <span className='text-base md:text-xl font-manrope uppercase font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent pt-1'>
               completed orders
             </span>
           </div>
-          <div className='font-inter text-4xl font-extrabold text-white tracking-wider flex items-center gap-4'>
-            230+{" "}
-            <span className='text-xl font-manrope uppercase font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent pt-1'>
-              reviews{" "}
+          <div className='font-inter text-3xl md:text-4xl font-extrabold text-white tracking-wider flex items-center gap-3 md:gap-4'>
+            230+
+            <span className='text-base md:text-xl font-manrope uppercase font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent pt-1'>
+              reviews
             </span>
           </div>
-          <div className='font-inter text-4xl font-extrabold text-white tracking-wider flex items-center gap-4'>
-            24/7{" "}
-            <span className='text-xl font-manrope uppercase font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent pt-1'>
+          <div className='font-inter text-3xl md:text-4xl font-extrabold text-white tracking-wider flex items-center gap-3 md:gap-4'>
+            24/7
+            <span className='text-base md:text-xl font-manrope uppercase font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent pt-1'>
               support online
             </span>
           </div>
         </div>
       </div>
-      <div className='absolute bottom-20  -right-40 h-[320px] w-[320px]  rounded-full blur-[200px] pointer-events-none bg-orange'></div>
+      <div className='absolute bottom-1/2 md:bottom-20 -right-20 md:-right-40 h-80 md:h-[320px] w-80 md:w-[320px] rounded-full blur-[220px] md:blur-[200px] pointer-events-none bg-orange'></div>
     </section>
   );
 }

@@ -23,9 +23,9 @@ export function ContactForm() {
 
   return (
     <section className='font-manrope relative '>
-      <div className='container px-4 mx-auto pt-10 pb-20'>
-        <div className='flex items-start justify-between relative z-10'>
-          <h2 className='text-5xl font-extrabold text-white mb-8 max-w-md'>
+      <div className='container px-4 mx-auto pt-10 pb-32 md:pb-20'>
+        <div className='flex flex-col md:flex-row items-start justify-between relative z-10'>
+          <h2 className='text-[2.5rem] md:text-5xl font-extrabold text-white mb-14 md:mb-8 max-w-md'>
             STILL HAVE QUESTIONS OR NEED HELP?
           </h2>
 
@@ -65,7 +65,7 @@ export function ContactForm() {
           </form>
         </div>
       </div>
-      <div className='absolute bottom-10  -right-20 h-[340px] w-[320px]  rounded-full blur-[200px] pointer-events-none bg-orange '></div>
+      <div className='absolute bottom-56 right-0 md:bottom-10  md:-right-20 h-[340px] w-[320px]  rounded-full blur-[200px] pointer-events-none bg-orange '></div>
     </section>
   );
 }

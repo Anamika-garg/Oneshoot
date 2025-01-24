@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -76,6 +77,37 @@ const products = [
 ];
 
 export function ProductGrid() {
+  const [visibleProducts, setVisibleProducts] = useState(products);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Determine screen size and set visible products accordingly
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        // Tailwind's md breakpoint is 768px
+        setIsMobile(true);
+        setVisibleProducts(products.slice(0, 3));
+      } else {
+        setIsMobile(false);
+        setVisibleProducts(products);
+      }
+    };
+
+    // Initial check
+    handleResize();
+
+    // Add event listener
+    window.addEventListener("resize", handleResize);
+
+    // Cleanup
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Handler for "More" button
+  const handleShowMore = () => {
+    setVisibleProducts(products);
+  };
+
   return (
     <section className='py-20 bg-black min-h-screen'>
       <div className='container px-4 mx-auto'>
@@ -93,7 +125,7 @@ export function ProductGrid() {
           {categories.map((category) => (
             <button
               key={category}
-              className={`px-4 py-2 text-xl transition-colors ${
+              className={`px-4 py-2 text-lg md:text-xl transition-colors ${
                 category === "All"
                   ? "bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent underline underline-offset-4"
                   : "text-gray-400 hover:text-white"
@@ -106,7 +138,7 @@ export function ProductGrid() {
 
         {/* Products Grid */}
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-          {products.map((product) => (
+          {visibleProducts.map((product) => (
             <div
               key={product.id}
               className='relative rounded-xl bg-[#0E0E0E] overflow-hidden group font-manrope'
@@ -165,6 +197,18 @@ export function ProductGrid() {
             </div>
           ))}
         </div>
+
+        {/* "More" Button for Mobile */}
+        {isMobile && visibleProducts.length < products.length && (
+          <div className='flex justify-center mt-8'>
+            <Button
+              onClick={handleShowMore}
+              className='bg-transparent hover:bg-orange/70 text-white font-semibold px-6 py-2 border-orange border-[1px]'
+            >
+              more
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );
