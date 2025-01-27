@@ -4,13 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { signup } from "@/app/actions/auth-actions";
 import { redirect } from "next/navigation";
 
 const SignUpForm = ({ switchMode }) => {
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
+
   const {
     register,
     handleSubmit,
@@ -38,23 +38,13 @@ const SignUpForm = ({ switchMode }) => {
     const { success, error } = await signup(formData);
 
     if (!success) {
-      toast({
-        title: "Sign-up failed.",
-        description: error,
-        variant: "destructive",
-      });
+      toast.error("Sign-up failed.");
       setLoading(false);
     } else {
-      toast({
-        title: "Sign-up successful!",
-        description: "Please check your email to confirm your account.",
-        variant: "success",
-      });
-      redirect("/login");
+      toast.success("Sign-up successful!");
+      // Redirect after toast is shown
+      setTimeout(() => redirect("/login"), 1000); // Delay redirect to allow toast to display
     }
-
-    setLoading(false);
-    switchMode("login");
   };
 
   return (

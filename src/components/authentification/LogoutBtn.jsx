@@ -1,32 +1,48 @@
-import { logout } from "@/app/actions/auth-actions";
-import React from "react";
+"use client";
+
+import { useQueryClient } from "@tanstack/react-query";
+import { createClient } from "@/utils/supabase/client";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
+
+const supabase = createClient();
 
 const LogoutBtn = () => {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
   const handleLogout = async () => {
-    await logout();
+    try {
+      await supabase.auth.signOut();
+      
+      // Clear all queries from the cache
+      queryClient.clear();
+      
+      // Update the user state immediately
+      queryClient.setQueryData(["user"], null);
+      
+      toast.success("Logged out successfully");
+      
+      // Navigate to login page
+      router.push("/login");
+      router.refresh();
+    } catch (error) {
+      console.error("Error signing out:", error.message);
+      toast.error("Error logging out");
+    }
   };
 
   return (
-    <button
+    <Button
       onClick={handleLogout}
-      className='w-full flex items-center space-x-3 text-white/90 hover:text-white py-2 px-4 rounded transition-colors'
+      variant="ghost"
+      className="flex items-center space-x-3 text-red-400 hover:text-red-300 bg-transparent hover:bg-transparent py-2 px-4 rounded transition-colors text-base w-full justify-start"
     >
-      <svg
-        xmlns='http://www.w3.org/2000/svg'
-        viewBox='0 0 24 24'
-        fill='none'
-        stroke='currentColor'
-        strokeWidth='2'
-        strokeLinecap='round'
-        strokeLinejoin='round'
-        className='w-5 h-5 text-red-400'
-      >
-        <path d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4' />
-        <polyline points='16 17 21 12 16 7' />
-        <line x1='21' y1='12' x2='9' y2='12' />
-      </svg>
-      <span className='text-red-400'>Sign Out</span>
-    </button>
+      <LogOut className="w-5 h-5" />
+      <span>Sign Out</span>
+    </Button>
   );
 };
 

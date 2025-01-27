@@ -43,6 +43,7 @@ export async function login(formData) {
     error: error?.message || "Authentication failed",
     success: !error,
     data: signInData || null,
+    session: signInData?.session || null,
   };
 }
 

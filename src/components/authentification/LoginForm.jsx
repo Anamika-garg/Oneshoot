@@ -1,16 +1,24 @@
+"use client";
+
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { login } from "@/app/actions/auth-actions";
 import { Loader2 } from "lucide-react";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { createClient } from "@/utils/supabase/client";
+
+const supabase = createClient();
 
 function LoginForm({ switchMode }) {
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
   const {
     register,
     handleSubmit,
@@ -29,26 +37,32 @@ function LoginForm({ switchMode }) {
     formData.append("email", data.email);
     formData.append("password", data.password);
 
-    const { success, error } = await login(formData);
+    try {
+      const { success, error, user, session } = await login(formData);
 
-    if (!success) {
-      toast({
-        title: "Login failed.",
-        description: error,
-        variant: "destructive",
-      });
+      if (!success) {
+        toast.error("Login failed");
+        setLoading(false);
+        return;
+      }
+
+      // Set the session in the client-side Supabase instance
+      if (session) {
+        await supabase.auth.setSession(session);
+      }
+
+      // Update React Query cache
+      queryClient.setQueryData(["user"], user);
+      
+      toast.success("Signed in successfully!");
+      router.refresh(); // Force a router refresh
+      setTimeout(() => router.push("/account"), 1000);
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("An error occurred during login");
+    } finally {
       setLoading(false);
-    } else {
-      toast({
-        title: "Signed in successfully!",
-        description: "Welcome back!",
-        variant: "success",
-      });
-      redirect("/account");
     }
-
-    setLoading(false);
-    switchMode("login");
   };
 
   return (
@@ -128,6 +142,7 @@ function LoginForm({ switchMode }) {
         <Button
           type='submit'
           className='w-full flex justify-center py-2 px-4 border border-transparent text-base font-semibold rounded-md text-black bg-orange hover:bg-yellow focus:outline-none transition-all duration-200'
+          disabled={loading}
         >
           {loading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
           Login

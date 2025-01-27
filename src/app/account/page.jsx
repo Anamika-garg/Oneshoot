@@ -1,3 +1,4 @@
+import ProtectedComponent from "@/components/ProtectedRoute";
 import AccountForm from "./account-form";
 import { createClient } from "@/utils/supabase/server";
 
@@ -8,5 +9,9 @@ export default async function Account() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  return <AccountForm user={user} />;
+  return (
+    <ProtectedComponent>
+      <AccountForm user={user} />;
+    </ProtectedComponent>
+  );
 }
