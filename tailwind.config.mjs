@@ -11,8 +11,9 @@ const config = {
       colors: {
         gradientStart: "#FFDD55",
         gradientMid: "#E39319",
-        orange: "#FFB000",
+        orange: "#FFB528",
         black: "#060101",
+        lightBlack: "#0E0E0E",
         yellow: "#FFDD55",
         textGradient:
           "bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent",

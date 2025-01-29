@@ -8,7 +8,7 @@ import Feedback from "@/components/feedback";
 export default function Home() {
   return (
     <div className='min-h-screen '>
-      <main className="overflow-hidden">
+      <main >
         <Hero />
         <ProductGrid />
         <Stats />

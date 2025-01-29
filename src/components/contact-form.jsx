@@ -22,7 +22,7 @@ export function ContactForm() {
     "bg-[#1F1F1E] border-none text-white placeholder:text-orange/40 focus-visible:ring-1 focus-visible:ring-orange focus-visible:ring-offset-0 focus:outline-none transition-all duration-200";
 
   return (
-    <section className='font-manrope relative '>
+    <section className='font-manrope relative bg-transparent z-0'>
       <div className='container px-4 mx-auto pt-10 pb-32 md:pb-20'>
         <div className='flex flex-col md:flex-row items-start justify-between relative z-10'>
           <h2 className='text-[2.5rem] md:text-5xl font-extrabold text-white mb-14 md:mb-8 max-w-md'>
