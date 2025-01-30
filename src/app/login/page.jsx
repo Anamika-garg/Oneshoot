@@ -1,10 +1,12 @@
 import AuthForm from "@/components/authentification/AuthForm";
-import React from "react";
+import React, { Suspense } from "react";
 
 const LoginPage = () => {
   return (
     <main>
-      <AuthForm />
+      <Suspense fallback={<div>Loading...</div>}>
+        <AuthForm />
+      </Suspense>
     </main>
   );
 };
