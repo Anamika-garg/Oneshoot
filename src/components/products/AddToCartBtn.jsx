@@ -3,27 +3,38 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
+import { useCart } from "@/app/context/CartContext";
 
-export function AddToCartButton({ product, variant }) {
+export const AddToCartButton = ({ product, variant, quantity, className }) => {
   const [isAdding, setIsAdding] = useState(false);
+  const { addToCart } = useCart();
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = () => {
     setIsAdding(true);
-    // Here you would implement the logic to add the item to the cart
-    // This could involve calling an API, updating local storage, etc.
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulating an API call
+    addToCart(
+      {
+        id: variant.id,
+        name: variant.name,
+        price: variant.price,
+      },
+      quantity
+    );
     setIsAdding(false);
-    alert("Item added to cart!");
   };
 
   return (
     <Button
       onClick={handleAddToCart}
       disabled={isAdding || variant.status === "out-of-stock"}
-      className='bg-orange hover:bg-orange/70 text-black font-semibold w-full'
+      className={`bg-orange hover:bg-orange/70 text-black font-semibold w-full ${className}`}
+      aria-label={`Add ${quantity} of ${variant.name} to cart`}
+      tabIndex='0'
+      onKeyDown={(e) => {
+        if (e.key === "Enter") handleAddToCart();
+      }}
     >
-      {isAdding ? "Adding..." : "Add to Cart"}
+      {isAdding ? "Adding..." : `Add ${quantity} to Cart`}
       <ShoppingCart className='ml-2 h-4 w-4' />
     </Button>
   );
-}
+};

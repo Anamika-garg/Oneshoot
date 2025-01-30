@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { AuthProvider } from "./context/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
+import { CartProvider } from "./context/CartContext";
 
 export function AppProvider({ children }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -21,18 +22,19 @@ export function AppProvider({ children }) {
         queryClient.setQueryData(["user"], null); // Immediately clear the user
       }
     });
-  
+
     return () => {
       subscription.unsubscribe();
     };
   }, [queryClient, supabase]);
-  
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        {children}
-        <Toaster />
+        <CartProvider>
+          {children}
+          <Toaster />
+        </CartProvider>
       </AuthProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
