@@ -1,18 +1,23 @@
+"use client";
+
 import { useEffect, useState } from "react";
-import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+
 import { Bell } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
 
 export const NotificationCenter = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
-  const supabase = useSupabaseClient();
-  const user = useUser();
+  const supabase = createClient();
 
   useEffect(() => {
-    if (!user) return;
-
     const fetchNotifications = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
@@ -29,16 +34,11 @@ export const NotificationCenter = () => {
 
     fetchNotifications();
 
-    const subscription = supabase
+    const channel = supabase
       .channel("notifications")
       .on(
         "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${user.id}`,
-        },
+        { event: "INSERT", schema: "public", table: "notifications" },
         (payload) => {
           setNotifications((prev) => [payload.new, ...prev]);
           setUnreadCount((prev) => prev + 1);
@@ -47,9 +47,9 @@ export const NotificationCenter = () => {
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(channel);
     };
-  }, [user, supabase]);
+  }, [supabase]);
 
   const handleToggle = () => setIsOpen(!isOpen);
 
