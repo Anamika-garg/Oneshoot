@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingBasket } from "lucide-react";
 import { useCart } from "@/app/context/CartContext";
 
 export const AddToCartButton = ({ product, variant, quantity, className }) => {
@@ -34,7 +34,7 @@ export const AddToCartButton = ({ product, variant, quantity, className }) => {
       }}
     >
       {isAdding ? "Adding..." : `Add ${quantity} to Cart`}
-      <ShoppingCart className='ml-2 h-4 w-4' />
+      <ShoppingBasket className='ml-2 h-4 w-4' />
     </Button>
   );
 };

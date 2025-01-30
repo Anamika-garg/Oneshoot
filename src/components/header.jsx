@@ -11,9 +11,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Bars3Icon,
   XMarkIcon,
-  ShoppingCartIcon,
+
 } from "@heroicons/react/24/outline";
 import LogoutBtn from "./authentification/LogoutBtn";
+import { ShoppingBasket } from "lucide-react";
 
 const Navbar = () => {
   const pathname = usePathname();
@@ -88,7 +89,7 @@ const Navbar = () => {
               href='/cart'
               className='relative flex items-center justify-center text-white hover:text-gray-300'
             >
-              <ShoppingCartIcon className='h-6 w-6' />
+              <ShoppingBasket className='h-6 w-6' />
               {cartCount > 0 && (
                 <span className='absolute -top-2 -right-2 bg-orange text-black text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'>
                   {cartCount}
