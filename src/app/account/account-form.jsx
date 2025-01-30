@@ -9,7 +9,7 @@ import { createClient } from "@/utils/supabase/client";
 import UpdatePasswordForm from "@/components/security/UpdatePasswordForm";
 import UpdateEmailForm from "@/components/security/UpdateEmailForm";
 import AuthGuard from "@/components/ProtectedRoute";
-import Notifications from "@/components/Notifications";
+import Notifications, { NotificationCenter } from "@/components/Notifications";
 
 export default function ProfilePage() {
   const supabase = createClient();
@@ -156,7 +156,7 @@ export default function ProfilePage() {
               <h2 className='text-2xl font-semibold mb-4 text-white'>
                 Notification Preferences
               </h2>
-              <Notifications userId={user.id} />
+              <NotificationCenter />
             </CardContent>
           </Card>
         </TabsContent>
