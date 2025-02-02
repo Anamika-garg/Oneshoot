@@ -1,53 +1,64 @@
 import { createClient } from "@/utils/supabase/server";
+import { NextResponse } from "next/server";
 
-export async function handler(req, res) {
-  // Ensure the request is a POST request from Sanity webhook
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method Not Allowed" });
-  }
-
-  // Log the request body to see the incoming data
-  console.log("Received data from webhook:", req.body);
+export async function POST(request) {
+  const supabase = createClient();
 
   // Parse the webhook data (Sanity product)
-  const { product } = req.body;
+  const { product } = await request.json();
 
   // Check if product data exists
   if (!product || !product._id || !product.name) {
-    return res.status(400).json({ message: "Invalid product data" });
+    return NextResponse.json(
+      { message: "Invalid product data" },
+      { status: 400 }
+    );
   }
 
   // Get all users from Supabase
-  const supabase = createClient();
   const { data: users, error } = await supabase
     .from("users")
     .select("id, email");
 
   if (error) {
-    return res.status(500).json({ message: "Error fetching users" });
+    console.error("Error fetching users:", error);
+    return NextResponse.json(
+      { message: "Error fetching users" },
+      { status: 500 }
+    );
   }
 
-  // Log the users to ensure we're fetching them correctly
-  console.log("Fetched users:", users);
-
   // For each user, send them a notification about the new product
-  users.forEach(async (user) => {
-    const { data, error } = await supabase.from("notifications").insert([
+  const notificationPromises = users.map(async (user) => {
+    const { error } = await supabase.from("notifications").insert([
       {
         user_id: user.id,
         message: `New product added: ${product.name}`,
         product_id: product._id,
-        email: user.email, // Include email for reference
+        email: user.email,
         read: false,
       },
     ]);
 
     if (error) {
       console.error("Error inserting notification:", error);
-    } else {
-      console.log("Notification sent to user:", user.email);
+      return false;
     }
+    return true;
   });
 
-  return res.status(200).json({ message: "Notifications sent" });
+  const results = await Promise.all(notificationPromises);
+  const allSuccessful = results.every(Boolean);
+
+  if (allSuccessful) {
+    return NextResponse.json(
+      { message: "Notifications sent successfully" },
+      { status: 200 }
+    );
+  } else {
+    return NextResponse.json(
+      { message: "Some notifications failed to send" },
+      { status: 207 }
+    );
+  }
 }

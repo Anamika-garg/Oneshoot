@@ -1,42 +1,75 @@
 "use client";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
 
-// Initialize the Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+const supabase = createClient();
 
-// Function to handle the inserts
-const handleInserts = (payload) => {
-  console.log('New notification received:', payload);
-};
-
-const useNotifications = () => {
+const useNotifications = (userId) => {
   const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Subscribe to changes in the 'notifications' table using the Realtime API
+    const fetchNotifications = async () => {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching notifications:", error);
+      } else {
+        setNotifications(data || []);
+      }
+      setLoading(false);
+    };
+
+    fetchNotifications();
+
     const subscription = supabase
-      .channel('notifications') // Subscribe to the "notifications" channel
-      .on('postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'notifications' }, // Listen to INSERT events in the notifications table
+      .channel("notifications")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${userId}`,
+        },
         (payload) => {
-          // When a new row is inserted, update the state with the new notification
-          setNotifications((prev) => [...prev, payload.new]);
-          handleInserts(payload); // Log the payload for debugging
+          setNotifications((prev) => [payload.new, ...prev]);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          console.log("Subscribed to notifications");
+        }
+        if (status === "CHANNEL_ERROR") {
+          console.error("Failed to subscribe to notifications");
+        }
+      });
 
-    // Cleanup subscription when component unmounts
     return () => {
-      subscription.unsubscribe(); // Use unsubscribe() to remove the subscription
+      subscription.unsubscribe();
     };
-  }, []);
+  }, [userId]);
 
-  return notifications;
+  const markAsRead = async (notificationId) => {
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("id", notificationId);
+
+    if (error) {
+      console.error("Error marking notification as read:", error);
+    } else {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
+      );
+    }
+  };
+
+  return { notifications, loading, markAsRead };
 };
 
 export default useNotifications;

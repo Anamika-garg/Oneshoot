@@ -1,4 +1,3 @@
-// app/profile/page.js (or your ProfilePage component file)
 "use client";
 
 import { useEffect, useState } from "react";
@@ -30,7 +29,7 @@ const ProfilePage = () => {
     };
 
     fetchUser();
-  }, [supabase]);
+  }, [supabase]); // Added supabase to the dependency array
 
   if (loading) {
     return (
