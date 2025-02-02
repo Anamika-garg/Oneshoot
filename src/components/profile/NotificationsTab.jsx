@@ -1,6 +1,6 @@
 // components/NotificationsTab.js
 import { Card, CardContent } from "@/components/ui/card";
-import { NotificationCenter } from "../Notifications";
+import NotificationCenter from "../Notifications";
 
 const NotificationsTab = ({ user }) => {
   return (
