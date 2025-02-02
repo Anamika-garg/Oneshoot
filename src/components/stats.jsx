@@ -1,12 +1,50 @@
+"use client";
+
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
+
 export function Stats() {
+  const sectionRef = useRef(null);
+  const isInView = useInView(sectionRef, { once: true, amount: 0.1 });
+
+  const staggerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.1,
+        duration: 0.5,
+      },
+    }),
+  };
+
   return (
-    <section className='py-20 relative'>
+    <motion.section
+      ref={sectionRef}
+      initial={{ opacity: 0 }}
+      animate={isInView ? { opacity: 1 } : {}}
+      transition={{ duration: 0.5 }}
+      className='py-20 relative overflow-x-clip'
+    >
       <div className='container px-4 mx-auto'>
-        <h2 className='text-2xl md:text-xl font-manrope uppercase font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent mb-4 md:mb-2'>
+        <motion.h2
+          variants={staggerVariants}
+          initial='hidden'
+          animate={isInView ? "visible" : "hidden"}
+          custom={0}
+          className='text-2xl md:text-xl font-manrope uppercase font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent mb-4 md:mb-2'
+        >
           Why Go with Us
-        </h2>
+        </motion.h2>
         <div className='flex flex-col md:flex-row justify-between items-start md:items-center'>
-          <div className='flex flex-col gap-8 md:gap-16 max-w-2xl w-full py-10'>
+          <motion.div
+            variants={staggerVariants}
+            initial='hidden'
+            animate={isInView ? "visible" : "hidden"}
+            custom={1}
+            className='flex flex-col gap-8 md:gap-16 max-w-2xl w-full py-10'
+          >
             <p className='text-2xl md:text-3xl font-bold text-white tracking-wider font-manrope'>
               At OneShot, we are dedicated to delivering an exceptional customer
               experience, ensuring maximum value for your investment.
@@ -15,10 +53,16 @@ export function Stats() {
               With a focus on excellence, we provide only high-quality content
               and fast, reliable support as your trusted partner.
             </p>
-          </div>
-          <div className='flex flex-col gap-10 md:gap-14 max-w-2xl w-full items-end  mt-8 md:mt-0'>
+          </motion.div>
+          <div className='flex flex-col gap-10 md:gap-14 max-w-2xl w-full items-end mt-8 md:mt-0'>
             {/* Feature Item 1 */}
-            <div className='flex items-center max-w-2xl gap-4 md:gap-5'>
+            <motion.div
+              variants={staggerVariants}
+              initial='hidden'
+              animate={isInView ? "visible" : "hidden"}
+              custom={2}
+              className='flex items-center max-w-2xl gap-4 md:gap-5'
+            >
               <svg
                 width='60'
                 height='60'
@@ -42,9 +86,15 @@ export function Stats() {
               <p className='text-lg md:text-xl font-medium text-white tracking-wider font-manrope max-w-56 '>
                 High-Quality Content
               </p>
-            </div>
+            </motion.div>
             {/* Feature Item 2 */}
-            <div className='flex items-center justify-start gap-4  md:gap-5'>
+            <motion.div
+              variants={staggerVariants}
+              initial='hidden'
+              animate={isInView ? "visible" : "hidden"}
+              custom={3}
+              className='flex items-center justify-start gap-4 md:gap-5'
+            >
               <svg
                 width='60'
                 height='60'
@@ -71,9 +121,15 @@ export function Stats() {
               <p className='text-lg md:text-xl font-medium text-white tracking-wider font-manrope max-w-56 '>
                 Fast and Responsive Support
               </p>
-            </div>
+            </motion.div>
             {/* Feature Item 3 */}
-            <div className='flex justify-start items-center gap-4 max-w-2xl md:gap-5'>
+            <motion.div
+              variants={staggerVariants}
+              initial='hidden'
+              animate={isInView ? "visible" : "hidden"}
+              custom={4}
+              className='flex justify-start items-center gap-4 max-w-2xl md:gap-5'
+            >
               <svg
                 width='60'
                 height='60'
@@ -98,31 +154,51 @@ export function Stats() {
               <p className='text-lg md:text-xl font-medium text-white tracking-wider font-manrope max-w-56 '>
                 Exceptional Customer Experience
               </p>
-            </div>
+            </motion.div>
           </div>
         </div>
-        <div className='flex flex-col md:flex-row items-center gap-y-8 md:gap-x-24 mx-auto justify-center mt-16 md:mt-24'>
-          <div className='font-inter text-3xl md:text-4xl font-extrabold text-white tracking-wider flex items-center gap-3 md:gap-4'>
+        <motion.div
+          variants={staggerVariants}
+          initial='hidden'
+          animate={isInView ? "visible" : "hidden"}
+          custom={5}
+          className='flex flex-col md:flex-row items-center gap-y-8 md:gap-x-24 mx-auto justify-center mt-16 md:mt-24'
+        >
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            className='font-inter text-3xl md:text-4xl font-extrabold text-white tracking-wider flex items-center gap-3 md:gap-4'
+          >
             3000+
             <span className='text-base md:text-xl font-manrope uppercase font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent pt-1'>
               completed orders
             </span>
-          </div>
-          <div className='font-inter text-3xl md:text-4xl font-extrabold text-white tracking-wider flex items-center gap-3 md:gap-4'>
+          </motion.div>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            className='font-inter text-3xl md:text-4xl font-extrabold text-white tracking-wider flex items-center gap-3 md:gap-4'
+          >
             230+
             <span className='text-base md:text-xl font-manrope uppercase font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent pt-1'>
               reviews
             </span>
-          </div>
-          <div className='font-inter text-3xl md:text-4xl font-extrabold text-white tracking-wider flex items-center gap-3 md:gap-4'>
+          </motion.div>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            className='font-inter text-3xl md:text-4xl font-extrabold text-white tracking-wider flex items-center gap-3 md:gap-4'
+          >
             24/7
             <span className='text-base md:text-xl font-manrope uppercase font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent pt-1'>
               support online
             </span>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
-      <div className='absolute bottom-1/2 md:bottom-20 -right-20 md:-right-40 h-80 md:h-[320px] w-80 md:w-[320px] rounded-full blur-[220px] md:blur-[200px] pointer-events-none bg-orange'></div>
-    </section>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={isInView ? { opacity: 1 } : {}}
+        transition={{ duration: 1 }}
+        className='absolute bottom-1/2 md:bottom-20 -right-20 md:-right-40 h-80 md:h-[320px] w-80 md:w-[320px] rounded-full blur-[220px] md:blur-[200px] pointer-events-none bg-orange'
+      ></motion.div>
+    </motion.section>
   );
 }

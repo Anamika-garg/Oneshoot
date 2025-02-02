@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export function Footer() {
   return (
-    <footer className='bg-transparent py-12 relative z-[1]'>
+    <footer className='bg-transparent py-12 relative z-[1] font-manrope'>
       <div className='container px-4'>
         <div className='flex flex-col-reverse md:flex-row justify-between items-start md:items-center gap-8'>
           <div className='mb-6 md:mb-0 max-w-xl'>
@@ -22,7 +22,7 @@ export function Footer() {
             </p>
           </div>
 
-          <nav className='flex gap-6 font-manrope flex-col md:flex-row items-start'>
+          <nav className='flex gap-6 font-manrope flex-col md:flex-row items-start text-lg font-medium'>
             {["Home", "Products", "Vouches", "FAQ"].map((item) => (
               <Link
                 key={item}

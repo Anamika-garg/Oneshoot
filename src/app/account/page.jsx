@@ -1,5 +1,5 @@
 import ProtectedComponent from "@/components/ProtectedRoute";
-import AccountForm from "./account-form";
+import AccountForm from "./profile";
 import { createClient } from "@/utils/supabase/server";
 
 export default async function Account() {

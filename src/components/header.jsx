@@ -8,11 +8,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { useCart } from "@/app/context/CartContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Bars3Icon,
-  XMarkIcon,
-
-} from "@heroicons/react/24/outline";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import LogoutBtn from "./authentification/LogoutBtn";
 import { ShoppingBasket } from "lucide-react";
 
@@ -46,7 +42,7 @@ const Navbar = () => {
   if (isLoading) return null;
 
   return (
-    <nav className='fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm'>
+    <nav className='fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm font-manrope'>
       <div className='mx-auto flex items-center justify-between p-4 max-w-7xl'>
         {/* Logo */}
         <Link href='/' className='text-white text-2xl font-bold'>
@@ -54,7 +50,7 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <div className='hidden md:flex space-x-6'>
+        <div className='hidden md:flex space-x-6 text-lg font-medium'>
           <Link
             href='/'
             className={`transition-colors ${pathname === "/" ? "text-orange" : "text-white hover:text-gray-300"}`}

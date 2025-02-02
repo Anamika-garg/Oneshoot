@@ -30,7 +30,7 @@ export default function ProductsPage() {
           <h2 className='text-xl font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent mb-2'>
             ALL PRODUCTS
           </h2>
-          <p className='text-4xl font-bold text-white tracking-wider'>
+          <p className='text-5xl font-bold text-white tracking-wider'>
             FULL COLLECTION
           </p>
         </div>

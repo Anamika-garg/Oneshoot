@@ -53,7 +53,7 @@ export default async function ProductPage({ params }) {
         </div>
       </div>
       <div className='container mx-auto px-4 mb-24'>
-        <h1 className='text-4xl font-bold text-center text-white mb-12 uppercase'>
+        <h1 className='text-5xl font-bold text-center text-white mb-12 uppercase'>
           {variant.name}
         </h1>
 
