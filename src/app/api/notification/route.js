@@ -29,9 +29,9 @@ export async function POST(request) {
       );
     }
 
-    // Get all users from Supabase
+    // Get all users from Supabase auth.users table
     const { data: users, error } = await supabase
-      .from("users")
+      .from("auth.users")
       .select("id, email");
 
     if (error) {
