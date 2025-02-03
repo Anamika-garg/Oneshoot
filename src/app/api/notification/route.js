@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { v4 as uuidv4 } from "uuid";
 
 export async function POST(request) {
   // Initialize Supabase client
@@ -46,11 +45,10 @@ export async function POST(request) {
     const notificationPromises = data.users.map(async (user) => {
       const { error } = await supabase.from("notifications").insert([
         {
-          id: uuidv4(),
+          id: user.id, // Use the user's id for both id and user_id
           user_id: user.id,
           message: `New product added: ${product.name}`,
           product_id: product._id,
-          email: user.email,
           read: false,
         },
       ]);
