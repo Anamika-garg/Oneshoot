@@ -29,10 +29,8 @@ export async function POST(request) {
       );
     }
 
-    // Get all users from Supabase auth.users table
-    const { data: users, error } = await supabase
-      .from("auth.users")
-      .select("id, email");
+    // Get all users from Supabase auth.users
+    const { data: users, error } = await supabase.auth.admin.listUsers();
 
     if (error) {
       console.error("Error fetching users:", error.message, error.details);
