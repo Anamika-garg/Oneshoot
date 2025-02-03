@@ -2,10 +2,19 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 export async function POST(request) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
+  // Initialize Supabase client
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error("Supabase environment variables are not set");
+    return NextResponse.json(
+      { message: "Server configuration error" },
+      { status: 500 }
+    );
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
     // Parse the webhook data (Sanity product)
@@ -25,11 +34,16 @@ export async function POST(request) {
       .select("id, email");
 
     if (error) {
-      console.error("Error fetching users:", error);
+      console.error("Error fetching users:", error.message, error.details);
       return NextResponse.json(
-        { message: "Error fetching users" },
+        { message: "Error fetching users", details: error.message },
         { status: 500 }
       );
+    }
+
+    if (!users || users.length === 0) {
+      console.log("No users found in the database");
+      return NextResponse.json({ message: "No users found" }, { status: 204 });
     }
 
     // For each user, send them a notification about the new product
@@ -45,7 +59,11 @@ export async function POST(request) {
       ]);
 
       if (error) {
-        console.error("Error inserting notification:", error);
+        console.error(
+          "Error inserting notification:",
+          error.message,
+          error.details
+        );
         return false;
       }
       return true;
@@ -66,9 +84,9 @@ export async function POST(request) {
       );
     }
   } catch (error) {
-    console.error("Unexpected error:", error);
+    console.error("Unexpected error:", error.message, error.stack);
     return NextResponse.json(
-      { message: "An unexpected error occurred" },
+      { message: "An unexpected error occurred", details: error.message },
       { status: 500 }
     );
   }
