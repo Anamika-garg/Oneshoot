@@ -3,7 +3,7 @@ import React from "react";
 
 const profile = () => {
   return (
-    <main>
+    <main className='overflow-x-clip'>
       <ProfilePage />
     </main>
   );

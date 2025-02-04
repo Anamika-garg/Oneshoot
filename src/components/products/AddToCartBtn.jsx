@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ShoppingBasket } from "lucide-react";
 import { useCart } from "@/app/context/CartContext";
+import { toast } from "sonner";
 
 export const AddToCartButton = ({ product, variant, quantity, className }) => {
   const [isAdding, setIsAdding] = useState(false);
@@ -13,12 +14,18 @@ export const AddToCartButton = ({ product, variant, quantity, className }) => {
     setIsAdding(true);
     addToCart(
       {
-        id: variant.id,
-        name: variant.name,
+        id: product._id,
+        variantId: variant._id,
+        name: product.name,
+        variantName: variant.name,
         price: variant.price,
+        image: product.image,
       },
       quantity
     );
+    toast.success(`Added ${quantity} ${variant.name} to cart`, {
+      description: `${product.name} - $${variant.price}`,
+    });
     setIsAdding(false);
   };
 

@@ -43,14 +43,14 @@ const Navbar = () => {
 
   return (
     <nav className='fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm font-manrope'>
-      <div className='mx-auto flex items-center justify-between p-4 max-w-7xl'>
+      <div className='container mx-auto flex items-center justify-between p-4 '>
         {/* Logo */}
         <Link href='/' className='text-white text-2xl font-bold'>
           <Image src='/logo.svg' alt='Logo' width={220} height={50} priority />
         </Link>
 
         {/* Desktop Navigation */}
-        <div className='hidden md:flex space-x-6 text-lg font-medium'>
+        <div className='hidden md:flex absolute left-1/2 transform -translate-x-1/2 space-x-6 text-lg font-medium'>
           <Link
             href='/'
             className={`transition-colors ${pathname === "/" ? "text-orange" : "text-white hover:text-gray-300"}`}

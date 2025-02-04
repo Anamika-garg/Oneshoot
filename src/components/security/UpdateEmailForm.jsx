@@ -99,7 +99,7 @@ export default function UpdateEmailForm({ currentEmail }) {
       <Button
         type='submit'
         disabled={loading}
-        className='w-full bg-orange hover:bg-orange/90 mt-4'
+        className='w-full bg-orange hover:bg-orange/90 mt-4 text-black'
       >
         {loading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
         Update Email

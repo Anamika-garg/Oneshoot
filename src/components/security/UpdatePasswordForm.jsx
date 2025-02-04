@@ -55,13 +55,16 @@ export default function UpdatePasswordForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col space-y-4 text-white h-full'>
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className='flex flex-col space-y-4 text-white h-full'
+    >
       <div>
         <Label htmlFor='newPassword'>New Password</Label>
         <Input
           id='newPassword'
           type='password'
-          className='bg-[#0E0E0E] border-white/10 text-white focus:outline-none transition-all duration-200 mt-2'
+          className='bg-lightBlack border-white/10 text-white focus:outline-none transition-all duration-200 mt-2'
           {...register("newPassword", {
             required: "New password is required",
             minLength: {
@@ -83,7 +86,7 @@ export default function UpdatePasswordForm() {
         <Input
           id='confirmPassword'
           type='password'
-          className='bg-[#0E0E0E] border-white/10 text-white focus:outline-none transition-all duration-200 mt-2'
+          className='bg-lightBlack border-white/10 text-white focus:outline-none transition-all duration-200 mt-2'
           {...register("confirmPassword", {
             required: "Please confirm your new password",
             validate: (value) =>
@@ -104,7 +107,7 @@ export default function UpdatePasswordForm() {
       <Button
         type='submit'
         disabled={loading}
-        className='w-full bg-orange hover:bg-orange/90 mt-4'
+        className='w-full bg-orange hover:bg-orange/90 mt-4  text-black'
       >
         {loading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
         Update Password

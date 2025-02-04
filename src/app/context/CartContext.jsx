@@ -20,20 +20,29 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = (item, quantity) => {
     setCart((prevCart) => {
-      const existingItem = prevCart.find((cartItem) => cartItem.id === item.id);
-      if (existingItem) {
-        return prevCart.map((cartItem) =>
-          cartItem.id === item.id
+      const existingItemIndex = prevCart.findIndex(
+        (cartItem) =>
+          cartItem.id === item.id && cartItem.variantId === item.variantId
+      );
+      if (existingItemIndex !== -1) {
+        // If item exists, create a new array with the updated item
+        return prevCart.map((cartItem, index) =>
+          index === existingItemIndex
             ? { ...cartItem, quantity: cartItem.quantity + quantity }
             : cartItem
         );
       }
+      // If item doesn't exist, add it to the cart
       return [...prevCart, { ...item, quantity }];
     });
   };
 
-  const removeFromCart = (id) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== id));
+  const removeFromCart = (id, variantId) => {
+    setCart((prevCart) =>
+      prevCart.filter(
+        (item) => !(item.id === id && item.variantId === variantId)
+      )
+    );
   };
 
   const clearCart = () => {

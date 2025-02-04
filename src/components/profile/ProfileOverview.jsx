@@ -19,7 +19,11 @@ const ProfileOverview = ({ user, onAvatarChange }) => {
     let avatarPath = "";
     if (typeof avatarData === "string") {
       avatarPath = avatarData;
-    } else if (avatarData && typeof avatarData === "object" && avatarData.path) {
+    } else if (
+      avatarData &&
+      typeof avatarData === "object" &&
+      avatarData.path
+    ) {
       avatarPath = avatarData.path;
     }
 
@@ -79,24 +83,24 @@ const ProfileOverview = ({ user, onAvatarChange }) => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <p className="text-gray-400">Loading...</p>
+      <div className='flex justify-center items-center h-64'>
+        <p className='text-gray-400'>Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card className="bg-gray-900 border-gray-800">
-        <CardContent className="p-6">
-          <div className="space-y-4">
-            <div className="flex items-center space-x-4">
+    <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+      <Card className='bg-lightBlack border-none'>
+        <CardContent className='p-6'>
+          <div className='space-y-4'>
+            <div className='flex items-center space-x-4'>
               <Image
                 src={avatarUrl}
-                alt="User Avatar"
+                alt='User Avatar'
                 width={64}
                 height={64}
-                className="rounded-full object-cover"
+                className='rounded-full object-cover'
               />
               <AvatarUpload
                 userId={currentUser.id}
@@ -104,14 +108,14 @@ const ProfileOverview = ({ user, onAvatarChange }) => {
               />
             </div>
             <div>
-              <h3 className="text-gray-400 mb-1">Username</h3>
-              <p className="text-xl text-white">
+              <h3 className='text-gray-400 mb-1'>Username</h3>
+              <p className='text-xl text-white'>
                 {currentUser.user_metadata.full_name || "Not set"}
               </p>
             </div>
             <div>
-              <h3 className="text-gray-400 mb-1">Joined</h3>
-              <p className="text-xl text-white">
+              <h3 className='text-gray-400 mb-1'>Joined</h3>
+              <p className='text-xl text-white'>
                 {new Date(currentUser.created_at).toLocaleString()}
               </p>
             </div>
@@ -119,22 +123,22 @@ const ProfileOverview = ({ user, onAvatarChange }) => {
         </CardContent>
       </Card>
 
-      <Card className="bg-gray-900 border-gray-800">
-        <CardContent className="p-6">
-          <div className="space-y-4">
+      <Card className='bg-lightBlack border-none'>
+        <CardContent className='p-6'>
+          <div className='space-y-4'>
             <div>
-              <h3 className="text-gray-400 mb-1">Email</h3>
-              <p className="text-xl text-white">{currentUser.email}</p>
+              <h3 className='text-gray-400 mb-1'>Email</h3>
+              <p className='text-xl text-white'>{currentUser.email}</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="col-span-1 md:col-span-2 mt-8">
-        <h2 className="text-2xl font-semibold mb-4">Latest Orders</h2>
-        <Card className="bg-gray-900 border-gray-800">
-          <CardContent className="p-6">
-            <div className="text-gray-400">There are no orders</div>
+      <div className='col-span-1 md:col-span-2 mt-8'>
+        <h2 className='text-2xl font-semibold mb-4'>Latest Orders</h2>
+        <Card className='bg-lightBlack border-none'>
+          <CardContent className='p-6'>
+            <div className='text-gray-400'>There are no orders</div>
           </CardContent>
         </Card>
       </div>
