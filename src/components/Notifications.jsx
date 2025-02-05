@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import useNotifications from "@/hooks/useNotifications";
 import { Bell, Check } from "lucide-react";
+import Loader from "./ui/Loader";
 
 const NotificationCenter = ({ userId, unreadCount }) => {
   const { notifications, loading, markAsRead } = useNotifications(userId);
@@ -18,7 +19,7 @@ const NotificationCenter = ({ userId, unreadCount }) => {
   }, [notifications]);
 
   if (loading) {
-    return <p className='text-gray-400'>Loading notifications...</p>;
+    return <Loader />;
   }
 
   if (!notifications || notifications.length === 0) {
@@ -52,7 +53,7 @@ const NotificationCenter = ({ userId, unreadCount }) => {
             {!notification.read && (
               <button
                 onClick={() => handleMarkAsRead(notification.id)}
-                className='text-black hover:text-green-600'
+                className='text-black hover:text-white'
                 aria-label='Mark as read'
               >
                 <Check className='h-5 w-5' />
@@ -64,7 +65,7 @@ const NotificationCenter = ({ userId, unreadCount }) => {
       {notifications.length > 5 && (
         <button
           onClick={() => setShowAll(!showAll)}
-          className='mt-4 text-black hover:text-blue-300'
+          className='mt-4 text-black hover:text-orange'
         >
           {showAll ? "Show less" : "Show all"}
         </button>

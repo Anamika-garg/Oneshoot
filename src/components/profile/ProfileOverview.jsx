@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import AvatarUpload from "@/components/profile/AvatarUpload";
 import { createClient } from "@/utils/supabase/client";
+import Loader from "../ui/Loader";
 
 const supabase = createClient();
 
@@ -82,11 +83,7 @@ const ProfileOverview = ({ user, onAvatarChange }) => {
   };
 
   if (isLoading) {
-    return (
-      <div className='flex justify-center items-center h-64'>
-        <p className='text-gray-400'>Loading...</p>
-      </div>
-    );
+    return <Loader />;
   }
 
   return (

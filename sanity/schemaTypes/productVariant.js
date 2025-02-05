@@ -14,6 +14,12 @@ export default {
     {name: 'price', type: 'number', title: 'Price', validation: (Rule) => Rule.required().min(0)},
     {name: 'description', type: 'text', title: 'Description', rows: 3},
     {
+      name: 'downloadFilePath',
+      title: 'Download File Path',
+      type: 'string',
+      description: 'Path to the file in Supabase Storage'
+    },
+    {
       name: 'status',
       type: 'string',
       title: 'Status',

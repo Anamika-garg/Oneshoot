@@ -3,10 +3,15 @@
 import { useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 import Image from "next/image";
-import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { useCart } from "@/app/context/CartContext";
 import NOWPaymentsCheckout from "./NOWPaymentCheckout";
+
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+
+// Initialize Supabase client
+const supabase = createClient();
 
 export default function CartPage() {
   const sectionRef = useRef(null);
@@ -14,6 +19,7 @@ export default function CartPage() {
   const { cart, removeFromCart, clearCart, getCartTotal } = useCart();
   const [email, setEmail] = useState("");
   const [showNOWPayments, setShowNOWPayments] = useState(false);
+  const router = useRouter();
 
   const handleProceedToPayment = () => {
     if (!email.trim()) {
@@ -21,6 +27,59 @@ export default function CartPage() {
       return;
     }
     setShowNOWPayments(true);
+  };
+
+  const handleTestPayment = async () => {
+    if (!email.trim()) {
+      alert("Please enter your email address");
+      return;
+    }
+
+    try {
+      // Get the current user
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError) throw userError;
+
+      if (!user) {
+        alert("Please sign in to complete the purchase");
+        return;
+      }
+
+      // Create orders for each item in the cart
+      for (const item of cart) {
+        const { data, error } = await supabase
+          .from("orders")
+          .insert({
+            user_id: user.id,
+            product_id: item.id,
+            variant_id: item.variantId,
+            status: "paid",
+            amount: item.price * item.quantity,
+          })
+          .select();
+
+        if (error) {
+          console.error("Error inserting order:", error);
+          throw error;
+        }
+
+        console.log("Inserted order:", data);
+      }
+
+      // Clear the cart
+      clearCart();
+
+      // Redirect to the profile page
+      router.push("/account");
+    } catch (error) {
+      console.error("Error processing test payment:", error);
+      alert(
+        "An error occurred while processing your test payment. Please try again."
+      );
+    }
   };
 
   return (
@@ -79,7 +138,7 @@ export default function CartPage() {
                             removeFromCart(item.id, item.variantId)
                           }
                           className='mt-1 text-sm text-red-500 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-500'
-                          tabIndex='0'
+                          tabIndex={0}
                           aria-label={`Remove ${item.name} from cart`}
                         >
                           Remove
@@ -110,7 +169,7 @@ export default function CartPage() {
                     placeholder='Delivery mail'
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className='bg-transparent text-white border border-white/20 placeholder:text-gray-400 focus:border-none focus:ring-0 focus-visible:ring-offset-1'
+                    className='bg-transparent text-white border border-white/20 placeholder:text-gray-400 focus:border-yellow focus:ring-0'
                     aria-label='Email for delivery'
                   />
                 </div>
@@ -124,7 +183,7 @@ export default function CartPage() {
                   <button
                     onClick={clearCart}
                     className='rounded-lg border border-red-500 px-6 py-2 text-red-500 transition-colors hover:bg-red-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500'
-                    tabIndex='0'
+                    tabIndex={0}
                     aria-label='Clear cart'
                   >
                     Clear Cart
@@ -132,10 +191,18 @@ export default function CartPage() {
                   <button
                     onClick={handleProceedToPayment}
                     className='rounded-lg bg-yellow px-6 py-2 text-black transition-colors hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400'
-                    tabIndex='0'
+                    tabIndex={0}
                     aria-label='Proceed to crypto payment'
                   >
                     Pay Now
+                  </button>
+                  <button
+                    onClick={handleTestPayment}
+                    className='rounded-lg bg-green-500 px-6 py-2 text-white transition-colors hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400'
+                    tabIndex={0}
+                    aria-label='Process test payment'
+                  >
+                    Test Payment
                   </button>
                 </div>
               </div>
