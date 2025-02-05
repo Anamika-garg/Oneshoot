@@ -1,16 +1,27 @@
 "use client";
 
-import Link from "next/link";
+import { useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { useCart } from "@/app/context/CartContext";
+import NOWPaymentsCheckout from "./NOWPaymentCheckout";
 
 export default function CartPage() {
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, amount: 0.1 });
   const { cart, removeFromCart, clearCart, getCartTotal } = useCart();
+  const [email, setEmail] = useState("");
+  const [showNOWPayments, setShowNOWPayments] = useState(false);
+
+  const handleProceedToPayment = () => {
+    if (!email.trim()) {
+      alert("Please enter your email address");
+      return;
+    }
+    setShowNOWPayments(true);
+  };
 
   return (
     <div
@@ -67,7 +78,9 @@ export default function CartPage() {
                           onClick={() =>
                             removeFromCart(item.id, item.variantId)
                           }
-                          className='mt-1 text-sm text-red-500 hover:text-red-400'
+                          className='mt-1 text-sm text-red-500 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-500'
+                          tabIndex='0'
+                          aria-label={`Remove ${item.name} from cart`}
                         >
                           Remove
                         </button>
@@ -95,7 +108,10 @@ export default function CartPage() {
                     id='email'
                     type='email'
                     placeholder='Delivery mail'
-                    className='bg-transparent text-white'
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className='bg-transparent text-white border border-white/20 placeholder:text-gray-400 focus:border-none focus:ring-0 focus-visible:ring-offset-1'
+                    aria-label='Email for delivery'
                   />
                 </div>
                 <div className='flex items-center justify-between pt-4'>
@@ -107,19 +123,30 @@ export default function CartPage() {
                 <div className='flex justify-end gap-4'>
                   <button
                     onClick={clearCart}
-                    className='rounded-lg border border-red-500 px-6 py-2 text-red-500 transition-colors hover:bg-red-500 hover:text-white'
+                    className='rounded-lg border border-red-500 px-6 py-2 text-red-500 transition-colors hover:bg-red-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500'
+                    tabIndex='0'
+                    aria-label='Clear cart'
                   >
                     Clear Cart
                   </button>
-                  <Link
-                    href='/checkout'
-                    className='rounded-lg bg-yellow px-6 py-2 text-black transition-colors hover:bg-yellow-400'
+                  <button
+                    onClick={handleProceedToPayment}
+                    className='rounded-lg bg-yellow px-6 py-2 text-black transition-colors hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400'
+                    tabIndex='0'
+                    aria-label='Proceed to crypto payment'
                   >
-                    Proceed to Payment
-                  </Link>
+                    Pay Now
+                  </button>
                 </div>
               </div>
             </div>
+            {showNOWPayments && (
+              <NOWPaymentsCheckout
+                amount={getCartTotal()}
+                email={email}
+                onClose={() => setShowNOWPayments(false)}
+              />
+            )}
           </div>
         )}
       </div>
