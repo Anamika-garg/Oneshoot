@@ -1,37 +1,51 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { motion, useInView } from "framer-motion";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { useCart } from "@/app/context/CartContext";
 import NOWPaymentsCheckout from "./NOWPaymentCheckout";
-
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { Checkmark } from "./ui/Checkmark";
+import { client as sanityClient } from "@/lib/sanity";
 
 // Initialize Supabase client
 const supabase = createClient();
 
 export default function CartPage() {
-  const sectionRef = useRef(null);
-  const isInView = useInView(sectionRef, { once: true, amount: 0.1 });
   const { cart, removeFromCart, clearCart, getCartTotal } = useCart();
   const [email, setEmail] = useState("");
   const [showNOWPayments, setShowNOWPayments] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (showSuccessPopup) {
+      const timer = setTimeout(() => {
+        setShowSuccessPopup(false);
+        router.push("/account");
+      }, 2000); // Show popup for 2 seconds before redirecting
+
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessPopup, router]);
 
   const handleProceedToPayment = () => {
     if (!email.trim()) {
-      alert("Please enter your email address");
+      toast.error("Please enter your email address");
       return;
     }
     setShowNOWPayments(true);
   };
 
   const handleTestPayment = async () => {
+    
+
     if (!email.trim()) {
-      alert("Please enter your email address");
+      toast.error("Please enter your email address");
       return;
     }
 
@@ -44,13 +58,25 @@ export default function CartPage() {
       if (userError) throw userError;
 
       if (!user) {
-        alert("Please sign in to complete the purchase");
+        toast.error("Please sign in to complete the purchase");
         return;
       }
 
+      console.log("User data:", user); // Log user data for debugging
+
       // Create orders for each item in the cart
       for (const item of cart) {
-        const { data, error } = await supabase
+        // Check product status in Sanity
+        const productStatus = await sanityClient.fetch(
+          `
+          *[_type == "product" && _id == $productId][0] {
+            "variantStatus": variants[_id == $variantId].status
+          }
+        `,
+          { productId: item.id, variantId: item.variantId }
+        );
+
+        const { data: orderData, error: orderError } = await supabase
           .from("orders")
           .insert({
             user_id: user.id,
@@ -61,36 +87,56 @@ export default function CartPage() {
           })
           .select();
 
-        if (error) {
-          console.error("Error inserting order:", error);
-          throw error;
+        if (orderError) {
+          console.error("Error inserting order:", orderError);
+          throw new Error(`Failed to create order: ${orderError.message}`);
         }
 
-        console.log("Inserted order:", data);
+        // Create notification based on product status
+        const notificationMessage =
+          productStatus.variantStatus === "available"
+            ? `Your order for ${item.name} has been successfully placed and will be delivered soon.`
+            : `Your order for ${item.name} has been received. We'll notify you when it's ready for delivery.`;
+
+        const { data: notificationData, error: notificationError } =
+          await supabase
+            .from("notifications")
+            .insert({
+              user_id: user.id,
+              message: notificationMessage,
+              product_id: item.id,
+              read: false,
+              email: user.email,
+            })
+            .select();
+
+        if (notificationError) {
+          console.error("Error inserting notification:", notificationError);
+          throw new Error(
+            `Failed to create notification: ${notificationError.message}`
+          );
+        }
+
+        console.log("Notification created:", notificationData); // Log created notification for debugging
       }
 
       // Clear the cart
       clearCart();
-
-      // Redirect to the profile page
-      router.push("/account");
+      // Show success popup
+      setShowSuccessPopup(true);
+      toast.success("Payment processed successfully!");
     } catch (error) {
       console.error("Error processing test payment:", error);
-      alert(
-        "An error occurred while processing your test payment. Please try again."
-      );
+      toast.error(`An error occurred: ${error.message}`);
     }
   };
 
   return (
-    <div
-      className='min-h-screen bg-black px-4 py-12 md:py-20 relative'
-      ref={sectionRef}
-    >
+    <div className='min-h-screen bg-black px-4 py-12 md:py-20 relative'>
       <div className='mx-auto max-w-4xl relative z-20'>
         <motion.div
           initial='hidden'
-          animate={isInView ? "visible" : "hidden"}
+          animate='visible'
           className='mb-12 text-center'
         >
           <h2 className='mb-2 text-lg font-medium text-yellow-500'>BASKET</h2>
@@ -217,7 +263,39 @@ export default function CartPage() {
           </div>
         )}
       </div>
+
       <div className='absolute top-1/2 md:top-10 -right-20 md:-right-40 h-80 md:h-[420px] w-80 md:w-[420px] rounded-full blur-[220px] md:blur-[320px] pointer-events-none bg-orange z-0'></div>
+      <AnimatePresence>
+        {showSuccessPopup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className='bg-white rounded-lg p-8 max-w-sm w-full text-center'
+            >
+              <Checkmark
+                size={80}
+                strokeWidth={4}
+                color='rgb(16 185 129)'
+                className='mx-auto mb-4'
+              />
+              <h2 className='text-2xl font-bold mb-4'>Payment Successful</h2>
+              <p className='mb-4'>
+                Your order has been processed successfully.
+              </p>
+              <p className='text-sm text-gray-500'>
+                Redirecting to account page...
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

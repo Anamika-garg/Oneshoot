@@ -1,51 +1,55 @@
-import { useState, useEffect } from "react";
-import useNotifications from "@/hooks/useNotifications";
-import { Bell, Check } from "lucide-react";
-import Loader from "./ui/Loader";
+"use client";
 
-const NotificationCenter = ({ userId, unreadCount }) => {
-  const { notifications, loading, markAsRead } = useNotifications(userId);
+import { useState } from "react";
+import { Bell, Check } from "lucide-react";
+import Loader from "./ui/loader";
+
+const NotificationCenter = ({ userId, notifications, markAsRead }) => {
   const [showAll, setShowAll] = useState(false);
 
-  // Handle marking the notification as read for the current user
-  const handleMarkAsRead = async (id) => {
-    await markAsRead(id); // This will be handled by the custom logic in the hook
-  };
-
-  // Count unread notifications and update the state
-  useEffect(() => {
-    const unreadNotifications =
-      notifications?.filter((notification) => !notification.read).length || 0;
-  }, [notifications]);
-
-  if (loading) {
+  if (!notifications) {
     return <Loader />;
   }
 
-  if (!notifications || notifications.length === 0) {
+  if (notifications.length === 0) {
     return <p className='text-gray-400'>No new notifications.</p>;
   }
 
+  const unreadCount = notifications.filter((n) => !n.read).length;
   const displayedNotifications = showAll
     ? notifications
     : notifications.slice(0, 5);
 
+  const handleMarkAsRead = async (id) => {
+    await markAsRead(id);
+  };
+
   return (
-    <div>
-      <ul className='space-y-2 mt-4 font-manrope'>
+    <div className='space-y-4'>
+      {unreadCount > 0 && (
+        <div className='flex items-center gap-2 text-gray-300'>
+          <span>Unread notifications: </span>
+          <span className='bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] inline-flex items-center justify-center'>
+            {unreadCount}
+          </span>
+        </div>
+      )}
+      <div className='space-y-2'>
         {displayedNotifications.map((notification) => (
-          <li
+          <div
             key={notification.id}
-            className={`flex justify-between items-center p-3 rounded ${
+            className={`flex justify-between items-center p-4 rounded-lg transition-colors ${
               notification.read
-                ? "bg-gray-800 text-gray-400" // Read notifications
-                : "bg-orange text-black" // Unread notifications
+                ? "bg-[#1e2730] text-gray-400"
+                : "bg-orange text-black"
             }`}
           >
-            <div className='flex items-center space-x-2'>
-              <Bell className='h-5 w-5 text-black' />
+            <div className='flex items-center gap-3'>
+              <Bell
+                className={`h-5 w-5 ${notification.read ? "text-gray-400" : "text-black"}`}
+              />
               <span
-                className={`text-sm ${notification.read ? "text-gray-400" : "text-black font-semibold"}`}
+                className={`${notification.read ? "text-gray-400" : "text-black font-medium"}`}
               >
                 {notification.message}
               </span>
@@ -53,19 +57,19 @@ const NotificationCenter = ({ userId, unreadCount }) => {
             {!notification.read && (
               <button
                 onClick={() => handleMarkAsRead(notification.id)}
-                className='text-black hover:text-white'
+                className='text-black hover:text-white transition-colors'
                 aria-label='Mark as read'
               >
                 <Check className='h-5 w-5' />
               </button>
             )}
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
       {notifications.length > 5 && (
         <button
           onClick={() => setShowAll(!showAll)}
-          className='mt-4 text-black hover:text-orange'
+          className='text-gray-400 hover:text-white transition-colors'
         >
           {showAll ? "Show less" : "Show all"}
         </button>

@@ -1,75 +1,70 @@
-"use client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/utils/supabase/client";
-import { useEffect, useState } from "react";
 
 const supabase = createClient();
 
+const fetchNotifications = async (userId) => {
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data;
+};
+
+const markNotificationAsRead = async (id) => {
+  const { error } = await supabase
+    .from("notifications")
+    .update({ read: true })
+    .eq("id", id);
+
+  if (error) throw error;
+};
+
 const useNotifications = (userId) => {
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      const { data, error } = await supabase
-        .from("notifications")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
+  const { data: notifications, isLoading } = useQuery({
+    queryKey: ["notifications", userId],
+    queryFn: () => fetchNotifications(userId),
+    enabled: !!userId,
+  });
 
-      if (error) {
-        console.error("Error fetching notifications:", error);
-      } else {
-        setNotifications(data || []);
-      }
-      setLoading(false);
-    };
-
-    fetchNotifications();
-
-    const subscription = supabase
-      .channel("notifications")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          setNotifications((prev) => [payload.new, ...prev]);
-        }
-      )
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          console.log("Subscribed to notifications");
-        }
-        if (status === "CHANNEL_ERROR") {
-          console.error("Failed to subscribe to notifications");
-        }
-      });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [userId]);
-
-  const markAsRead = async (notificationId) => {
-    const { error } = await supabase
-      .from("notifications")
-      .update({ read: true })
-      .eq("id", notificationId);
-
-    if (error) {
-      console.error("Error marking notification as read:", error);
-    } else {
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
+  const markAsRead = useMutation({
+    mutationFn: markNotificationAsRead,
+    onMutate: async (id) => {
+      await queryClient.cancelQueries(["notifications", userId]);
+      const previousNotifications = queryClient.getQueryData([
+        "notifications",
+        userId,
+      ]);
+      queryClient.setQueryData(["notifications", userId], (old) =>
+        old.map((notification) =>
+          notification.id === id
+            ? { ...notification, read: true }
+            : notification
+        )
       );
-    }
-  };
+      return { previousNotifications };
+    },
+    onError: (err, variables, context) => {
+      queryClient.setQueryData(
+        ["notifications", userId],
+        context.previousNotifications
+      );
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(["notifications", userId]);
+    },
+  });
 
-  return { notifications, loading, markAsRead };
+  return {
+    notifications,
+    loading: isLoading,
+    markAsRead: (id) => markAsRead.mutate(id),
+  };
 };
 
 export default useNotifications;
