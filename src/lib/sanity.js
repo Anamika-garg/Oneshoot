@@ -52,3 +52,18 @@ export const getProductVariants = (productId) =>
 `,
     { productId }
   );
+
+export const getPromoCode = (code) =>
+  client.fetch(
+    `
+      *[_type == "promoCode" && code == $code][0] {
+        code,
+        discount,
+        isPercentage,
+        validFrom,
+        validTo,
+        notificationText
+      }
+    `,
+    { code }
+  );
