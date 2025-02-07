@@ -1,6 +1,6 @@
 import { Manrope, Inter, Montserrat } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/header";
+import Navbar from "@/components/navigation/header";
 
 import { Footer } from "@/components/footer";
 import { AppProvider } from "./AppProvider";
@@ -29,7 +29,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang='en'>
       <body
-        className={`${manrope.variable} ${inter.variable} ${montserrat.variable} antialiased bg-black`}
+        className={`${manrope.variable} ${inter.variable} ${montserrat.variable} antialiased bg-black font-manrope`}
       >
         <AppProvider>
           <Navbar />

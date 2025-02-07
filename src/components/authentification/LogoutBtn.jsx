@@ -16,15 +16,15 @@ const LogoutBtn = () => {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      
+
       // Clear all queries from the cache
       queryClient.clear();
-      
+
       // Update the user state immediately
       queryClient.setQueryData(["user"], null);
-      
+
       toast.success("Logged out successfully");
-      
+
       // Navigate to login page
       router.push("/login");
       router.refresh();
@@ -37,10 +37,10 @@ const LogoutBtn = () => {
   return (
     <Button
       onClick={handleLogout}
-      variant="ghost"
-      className="flex items-center space-x-3 text-red-400 hover:text-red-300 bg-transparent hover:bg-transparent py-2 px-4 rounded transition-colors text-base w-full justify-start"
+      variant='ghost'
+      className='flex items-center space-x-1 text-red-400 hover:text-red-300 bg-transparent hover:bg-transparent pl-1 rounded transition-colors text-base w-full justify-start'
     >
-      <LogOut className="w-5 h-5" />
+      <LogOut className='w-5 h-5' />
       <span>Sign Out</span>
     </Button>
   );

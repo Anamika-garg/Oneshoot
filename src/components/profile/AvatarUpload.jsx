@@ -1,106 +1,101 @@
-import { useState } from "react";
-import PropTypes from "prop-types";
+"use client";
+
+import { useRef, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 const supabase = createClient();
 
 const AvatarUpload = ({ userId, onAvatarChange }) => {
   const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState("");
+  const fileInputRef = useRef(null);
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const handleButtonClick = () => {
+    fileInputRef.current?.click();
+  };
 
-    setUploading(true);
-    setMessage("");
-
+  const uploadAvatar = async (event) => {
     try {
+      setUploading(true);
+
+      if (!event.target.files || event.target.files.length === 0) {
+        throw new Error("You must select an image to upload.");
+      }
+
+      const file = event.target.files[0];
       const fileExt = file.name.split(".").pop();
-      const fileName = `${userId}/avatar.${fileExt}`;
+      const filePath = `${userId}/${Math.random()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(fileName, file, {
-          upsert: true,
-          contentType: file.type,
-        });
+        .upload(filePath, file);
 
       if (uploadError) {
         throw uploadError;
       }
 
-      const { data: publicURL, error: urlError } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(fileName);
-
-      if (urlError) {
-        throw urlError;
-      }
-
-      const { error: updateError } = await supabase.auth.updateUser({
-        data: { avatar_url: publicURL },
-      });
+      const { data: userData, error: updateError } =
+        await supabase.auth.updateUser({
+          data: { avatar_url: filePath },
+        });
 
       if (updateError) {
         throw updateError;
       }
+      const { data, error: signedUrlError } = await supabase.storage
+        .from("avatars")
+        .createSignedUrl(filePath, 60 * 60); // 1 hour expiry
 
-      setMessage("Avatar updated successfully.");
-      onAvatarChange(); // Trigger re-fetch of user data
+      if (signedUrlError) {
+        throw signedUrlError;
+      }
+
+      if (data) {
+        onAvatarChange(data.signedUrl);
+        toast.success("Avatar updated successfully");
+      } else {
+        throw new Error("Failed to get signed URL");
+      }
     } catch (error) {
       console.error("Error uploading avatar:", error);
-      setMessage("Failed to upload avatar.");
+      toast.error(
+        `Failed to upload avatar: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     } finally {
       setUploading(false);
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      document.getElementById("avatar-upload").click();
-    }
-  };
-
   return (
     <div>
-      <label
-        htmlFor='avatar-upload'
-        className='cursor-pointer px-4 py-2 bg-blue-600 text-white rounded'
-        aria-label='Upload Avatar'
-        tabIndex='0'
-        onKeyDown={handleKeyDown}
-      >
-        {uploading ? "Uploading..." : "Change Avatar"}
-      </label>
       <input
+        ref={fileInputRef}
+        style={{ display: "none" }}
         type='file'
         id='avatar-upload'
         accept='image/*'
-        className='hidden'
-        onChange={handleFileChange}
-        aria-label='Avatar Upload Input'
+        onChange={uploadAvatar}
+        disabled={uploading}
       />
-      {message && (
-        <p
-          className={`mt-2 ${
-            message.includes("successfully") ? "text-green-400" : "text-red-400"
-          }`}
-        >
-          {message}
-        </p>
-      )}
+      <Button
+        variant='outline'
+        disabled={uploading}
+        onClick={handleButtonClick}
+        className='bg-orange hover:bg-yellow text-black font-semibold w-full border-0'
+      >
+        {uploading ? (
+          <>
+            <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+            Uploading...
+          </>
+        ) : (
+          "Upload New Avatar"
+        )}
+      </Button>
     </div>
   );
-};
-
-AvatarUpload.propTypes = {
-  userId: PropTypes.string.isRequired,
-  onAvatarChange: PropTypes.func,
-};
-
-AvatarUpload.defaultProps = {
-  onAvatarChange: () => {},
 };
 
 export default AvatarUpload;

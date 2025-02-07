@@ -2,17 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-
 import { Button } from "@/components/ui/button";
 import { client } from "@/lib/sanity";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import Loader from "../ui/Loader";
 
-// Initialize Supabase client
 const supabase = createClient();
-
-// Initialize Sanity client
 
 const OrdersTab = ({ user }) => {
   const [orders, setOrders] = useState([]);
@@ -21,7 +17,6 @@ const OrdersTab = ({ user }) => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        // Fetch orders from Supabase
         const { data: ordersData, error } = await supabase
           .from("orders")
           .select("*")
@@ -35,7 +30,6 @@ const OrdersTab = ({ user }) => {
           return;
         }
 
-        // Fetch product details from Sanity
         const ordersWithDetails = await Promise.all(
           ordersData.map(async (order) => {
             const productQuery = `*[_type == "product" && _id == $productId][0]{
@@ -69,37 +63,6 @@ const OrdersTab = ({ user }) => {
 
     fetchOrders();
   }, [user.id]);
-
-  // const handleDownload = async (downloadFilePath, productName) => {
-  //   if (!downloadFilePath) {
-  //     alert("Download file path not available for this product.");
-  //     return;
-  //   }
-
-  //   try {
-  //     // Generate a signed URL for the file
-  //     const { data, error } = await supabase.storage
-  //       .from("product-files")
-  //       .createSignedUrl(downloadFilePath, 60); // URL expires in 60 seconds
-
-  //     if (error) throw error;
-
-  //     if (!data?.signedUrl) {
-  //       throw new Error("Failed to generate signed URL");
-  //     }
-
-  //     // Create a temporary anchor element to trigger the download
-  //     const link = document.createElement("a");
-  //     link.href = data.signedUrl;
-  //     link.download = `${productName}.zip`; // You can adjust the file extension as needed
-  //     document.body.appendChild(link);
-  //     link.click();
-  //     document.body.removeChild(link);
-  //   } catch (error) {
-  //     console.error("Error downloading file:", error);
-  //     alert("Error downloading file. Please try again.");
-  //   }
-  // };
 
   if (loading) {
     return <Loader />;

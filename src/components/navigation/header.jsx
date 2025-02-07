@@ -6,11 +6,12 @@ import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/app/context/AuthContext";
 import { useCart } from "@/app/context/CartContext";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import LogoutBtn from "./authentification/LogoutBtn";
 import { ShoppingBasket } from "lucide-react";
+import NavAvatar from "./NavAvatar";
+import LogoutBtn from "../authentification/LogoutBtn";
+import { HamburgerMenu } from "../ui/HamburgerMenu";
+
 
 const Navbar = () => {
   const pathname = usePathname();
@@ -30,8 +31,6 @@ const Navbar = () => {
 
     if (isDropdownOpen) {
       document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
@@ -39,11 +38,20 @@ const Navbar = () => {
     };
   }, [isDropdownOpen]);
 
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
   if (isLoading) return null;
+
+  const navItems = [
+    { href: "/", label: "Home" },
+    { href: "/products", label: "Products" },
+    { href: "/vouches", label: "Vouches" },
+    { href: "/faq", label: "FAQ" },
+  ];
 
   return (
     <nav className='fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm font-manrope'>
-      <div className='container mx-auto flex items-center justify-between p-4 '>
+      <div className='container mx-auto flex items-center justify-between p-4'>
         {/* Logo */}
         <Link href='/' className='text-white text-2xl font-bold'>
           <Image src='/logo.svg' alt='Logo' width={220} height={50} priority />
@@ -51,35 +59,23 @@ const Navbar = () => {
 
         {/* Desktop Navigation */}
         <div className='hidden md:flex absolute left-1/2 transform -translate-x-1/2 space-x-6 text-lg font-medium'>
-          <Link
-            href='/'
-            className={`transition-colors ${pathname === "/" ? "text-orange" : "text-white hover:text-gray-300"}`}
-          >
-            Home
-          </Link>
-          <Link
-            href='/products'
-            className={`transition-colors ${pathname === "/products" ? "text-orange" : "text-white hover:text-gray-300"}`}
-          >
-            Products
-          </Link>
-          <Link
-            href='/vouches'
-            className={`transition-colors ${pathname === "/vouches" ? "text-orange" : "text-white hover:text-gray-300"}`}
-          >
-            Vouches
-          </Link>
-          <Link
-            href='/faq'
-            className={`transition-colors ${pathname === "/faq" ? "text-orange" : "text-white hover:text-gray-300"}`}
-          >
-            FAQ
-          </Link>
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`transition-colors ${
+                pathname === item.href
+                  ? "text-orange"
+                  : "text-white hover:text-gray-300"
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
         </div>
 
-        {/* Right Section: Cart & User Profile */}
-        <div className='flex items-center space-x-4'>
-          {/* Cart Icon - Positioned near Avatar */}
+        {/* Right Section: Cart & User Profile (Desktop) */}
+        <div className='hidden md:flex items-center space-x-4'>
           {cartCount > 0 && (
             <Link
               href='/cart'
@@ -102,17 +98,7 @@ const Navbar = () => {
                 aria-haspopup='true'
                 aria-expanded={isDropdownOpen}
               >
-                <Avatar className='h-10 w-10'>
-                  <AvatarImage
-                    src={user.avatar || "/default-avatar.png"}
-                    alt={user.user_metadata.full_name || "User"}
-                  />
-                  <AvatarFallback>
-                    {user.user_metadata.full_name
-                      ? user.user_metadata.full_name.charAt(0)
-                      : "U"}
-                  </AvatarFallback>
-                </Avatar>
+                <NavAvatar user={user} />
               </button>
 
               {/* Dropdown Menu */}
@@ -133,10 +119,10 @@ const Navbar = () => {
                         <p className='text-sm text-white/75'>{user.email}</p>
                       </div>
                       <hr className='border-white/15' />
-                      <div className='space-y-2'>
+                      <div className='space-y-2 p-0'>
                         <Link
                           href='/account'
-                          className='flex items-center space-x-3 text-white/90 hover:text-white py-2 px-4 rounded transition-colors'
+                          className='flex items-center space-x-3 text-white/90 hover:text-white py-2 pr-4 rounded transition-colors'
                           onClick={() => setIsDropdownOpen(false)}
                         >
                           <svg
@@ -162,7 +148,7 @@ const Navbar = () => {
               </AnimatePresence>
             </div>
           ) : (
-            <div className='hidden md:flex space-x-4'>
+            <div className='space-x-4'>
               <Link
                 href='/login?mode=login'
                 className='text-white px-4 py-2 hover:text-gray-300 transition-colors'
@@ -179,18 +165,97 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile Burger Menu */}
-        <button
-          onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-          className='md:hidden text-white focus:outline-none'
-        >
-          {isMobileMenuOpen ? (
-            <XMarkIcon className='w-8 h-8 text-orange' />
-          ) : (
-            <Bars3Icon className='w-8 h-8 text-orange' />
+        {/* Mobile Right Section: Cart & Burger Menu */}
+        <div className='md:hidden flex items-center space-x-4'>
+          {cartCount > 0 && (
+            <Link
+              href='/cart'
+              className='relative flex items-center justify-center text-white hover:text-gray-300'
+            >
+              <ShoppingBasket className='h-6 w-6' />
+              {cartCount > 0 && (
+                <span className='absolute -top-2 -right-2 bg-orange text-black text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'>
+                  {cartCount}
+                </span>
+              )}
+            </Link>
           )}
-        </button>
+          <HamburgerMenu
+            isOpen={isMobileMenuOpen}
+            setIsOpen={setIsMobileMenuOpen}
+          />
+        </div>
       </div>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className='md:hidden bg-black/90 backdrop-blur-sm'
+          >
+            <div className='container mx-auto py-4 space-y-4'>
+              {user && (
+                <div className='flex items-center space-x-4 px-4 py-2'>
+                  <NavAvatar user={user} />
+                  <div>
+                    <p className='font-semibold text-white'>
+                      {user.user_metadata.full_name || "User"}
+                    </p>
+                    <p className='text-sm text-white/75'>{user.email}</p>
+                  </div>
+                </div>
+              )}
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`block py-2 px-4 ${
+                    pathname === item.href ? "text-orange" : "text-white"
+                  }`}
+                  onClick={closeMobileMenu}
+                >
+                  {item.label}
+                </Link>
+              ))}
+              {!user ? (
+                <>
+                  <Link
+                    href='/login?mode=login'
+                    className='block py-2 px-4 text-white hover:bg-white/10 rounded transition-colors'
+                    onClick={closeMobileMenu}
+                  >
+                    Log in
+                  </Link>
+                  <Link
+                    href='/login?mode=signup'
+                    className='block py-2 px-4 bg-orange text-black rounded hover:bg-orange-600 transition-colors'
+                    onClick={closeMobileMenu}
+                  >
+                    Sign up
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href='/account'
+                    className='block py-2 px-4 text-white hover:bg-white/10 rounded transition-colors'
+                    onClick={closeMobileMenu}
+                  >
+                    Profile Info
+                  </Link>
+                  <div className='py-2 px-4'>
+                    <LogoutBtn />
+                  </div>
+                </>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 };

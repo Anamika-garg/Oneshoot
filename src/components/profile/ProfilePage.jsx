@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserIcon, Shield, Bell, ShoppingCart } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
@@ -17,6 +19,12 @@ const supabase = createClient();
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [selectedTab, setSelectedTab] = useState(
+    searchParams.get("tab") || "overview"
+  );
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -35,12 +43,24 @@ const ProfilePage = () => {
     fetchUser();
   }, []);
 
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab) {
+      setSelectedTab(tab);
+    }
+  }, [searchParams]);
+
   const {
     notifications,
     loading: notificationsLoading,
     markAsRead,
   } = useNotifications(user?.id);
   const unreadCount = notifications?.filter((n) => !n.read).length || 0;
+
+  const handleTabChange = (newTab) => {
+    setSelectedTab(newTab);
+    router.push(`/account?tab=${newTab}`, undefined, { shallow: true });
+  };
 
   if (loading || notificationsLoading) {
     return <Loader />;
@@ -61,7 +81,11 @@ const ProfilePage = () => {
           Profile overview
         </h1>
 
-        <Tabs defaultValue='overview' className='w-full mt-16 z-20 relative'>
+        <Tabs
+          value={selectedTab}
+          onValueChange={handleTabChange}
+          className='w-full mt-16 z-20 relative'
+        >
           <TabsList className='grid w-full grid-cols-4 mb-8 bg-lightBlack'>
             <TabsTrigger
               value='overview'
