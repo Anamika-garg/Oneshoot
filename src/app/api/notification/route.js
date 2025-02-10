@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 export async function POST(request) {
-  // Initialize Supabase client
+  console.log("Webhook received");
+
   const supabaseUrl = "https://ugnqtphzgygdfzenwzfu.supabase.co";
   const supabaseKey =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnbnF0cGh6Z3lnZGZ6ZW53emZ1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNzcyOTY4NywiZXhwIjoyMDUzMzA1Njg3fQ.XOcdktgh9I6tNunz8V2zplHDKHjLng_2ijwtji2de_g";
@@ -18,46 +19,82 @@ export async function POST(request) {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    const { product } = await request.json();
+    const payload = await request.json();
+    console.log("Received payload:", payload);
 
-    if (!product || !product._id || !product.name) {
+    let itemData;
+    let itemType;
+
+    if (payload._type === "product") {
+      itemData = payload;
+      itemType = "product";
+    } else if (payload._type === "promoCode") {
+      itemData = payload;
+      itemType = "promoCode";
+    } else {
+      console.error("Unknown payload structure:", payload);
       return NextResponse.json(
-        { message: "Invalid product data" },
+        { message: "Invalid data structure" },
         { status: 400 }
       );
     }
 
-    const { data, error } = await supabase.auth.admin.listUsers();
-
-    if (error) {
-      console.error("Error fetching users:", error.message, error.details);
+    if (!itemData || !itemData._id) {
       return NextResponse.json(
-        { message: "Error fetching users", details: error.message },
+        { message: "Invalid item data" },
+        { status: 400 }
+      );
+    }
+
+    const { data: usersData, error: userError } =
+      await supabase.auth.admin.listUsers();
+
+    if (userError) {
+      console.error(
+        "Error fetching users:",
+        userError.message,
+        userError.details
+      );
+      return NextResponse.json(
+        { message: "Error fetching users", details: userError.message },
         { status: 500 }
       );
     }
 
-    if (!data || !data.users || data.users.length === 0) {
+    if (!usersData || !usersData.users || usersData.users.length === 0) {
       console.log("No users found in the database");
       return NextResponse.json({ message: "No users found" }, { status: 204 });
     }
 
-    const notificationPromises = data.users.map(async (user) => {
-      const { error } = await supabase.from("notifications").insert([
-        {
-          id: user.id, // Use the user's id for both id and user_id
-          user_id: user.id,
-          message: `New product added: ${product.name}`,
-          product_id: product._id,
-          read: false,
-        },
-      ]);
+    const users = usersData.users;
 
-      if (error) {
+    let message;
+    if (itemType === "product") {
+      message = `New product added: ${itemData.name}`;
+    } else if (itemType === "promoCode") {
+      message =
+        itemData.notificationText || `New promo code added: ${itemData.code}`;
+    }
+
+    const notificationPromises = users.map(async (user) => {
+      const notificationData = {
+        user_id: user.id,
+        message,
+        read: false,
+        email: user.email,
+        product_id: itemType === "product" ? itemData._id : null,
+        promo_code_id: itemType === "promoCode" ? itemData._id : null,
+      };
+
+      const { error: insertError } = await supabase
+        .from("notifications")
+        .insert([notificationData]);
+
+      if (insertError) {
         console.error(
           "Error inserting notification:",
-          error.message,
-          error.details
+          insertError.message,
+          insertError.details
         );
         return false;
       }

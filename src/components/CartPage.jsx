@@ -87,6 +87,21 @@ export default function CartPage() {
     return total.toFixed(2);
   };
 
+  const calculateDiscountAmount = (itemPrice, itemQuantity) => {
+    if (!appliedPromo) return 0;
+    const itemTotal = itemPrice * itemQuantity;
+    if (appliedPromo.isPercentage) {
+      return (itemTotal * appliedPromo.discount) / 100;
+    } else {
+      // For flat discounts, distribute proportionally across items
+      const cartTotal = cart.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
+      return (itemTotal / cartTotal) * appliedPromo.discount;
+    }
+  };
+
   const handleTestPayment = async () => {
     if (!email.trim()) {
       toast.error("Please enter your email address");
@@ -113,6 +128,11 @@ export default function CartPage() {
           { productId: item.id, variantId: item.variantId }
         );
 
+        const discountAmount = calculateDiscountAmount(
+          item.price,
+          item.quantity
+        );
+
         const { error: orderError } = await supabase.from("orders").insert({
           user_id: user.id,
           product_id: item.id,
@@ -120,11 +140,7 @@ export default function CartPage() {
           status: "paid",
           amount: item.price * item.quantity,
           promo_code: appliedPromo ? appliedPromo.code : null,
-          discount_amount: appliedPromo
-            ? appliedPromo.isPercentage
-              ? (item.price * item.quantity * appliedPromo.discount) / 100
-              : appliedPromo.discount
-            : 0,
+          discount_amount: discountAmount,
         });
 
         if (orderError)

@@ -11,10 +11,12 @@ const CACHE_DURATION = 3600000;
 
 const NavAvatar = ({ user }) => {
   const [avatarUrl, setAvatarUrl] = useState(null);
+  const [hasNotifications, setHasNotifications] = useState(false);
 
   useEffect(() => {
     fetchAvatarUrl();
-  }, [user]); // Updated dependency array
+    checkNotifications();
+  }, []); // Removed unnecessary dependency: user
 
   const getCachedAvatar = (key) => {
     try {
@@ -98,19 +100,42 @@ const NavAvatar = ({ user }) => {
     }
   };
 
+  const checkNotifications = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("read", false)
+        .limit(1);
+
+      if (error) throw error;
+      setHasNotifications(data.length > 0);
+    } catch (error) {
+      console.error("Error checking notifications:", error);
+    }
+  };
+
   return (
-    <Avatar className='h-10 w-10 relative overflow-hidden'>
-      <AvatarImage
-        src={avatarUrl || "/avatar-default.svg"}
-        alt={user?.user_metadata?.full_name || "User"}
-        className='object-cover w-full h-full '
-      />
-      <AvatarFallback className='absolute inset-0 flex items-center justify-center text-lg font-medium bg-gray-100 text-gray-800'>
-        {user?.user_metadata?.full_name
-          ? user.user_metadata.full_name.charAt(0).toUpperCase()
-          : "U"}
-      </AvatarFallback>
-    </Avatar>
+    <div className='relative'>
+      <Avatar className='h-10 w-10 relative overflow-hidden'>
+        <AvatarImage
+          src={avatarUrl || "/avatar-default.svg"}
+          alt={user?.user_metadata?.full_name || "User"}
+          className='object-cover w-full h-full'
+        />
+        <AvatarFallback className='absolute inset-0 flex items-center justify-center text-lg font-medium bg-gray-100 text-gray-800'>
+          {user?.user_metadata?.full_name
+            ? user.user_metadata.full_name.charAt(0).toUpperCase()
+            : "U"}
+        </AvatarFallback>
+      </Avatar>
+      {hasNotifications && (
+        <span className='absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500' />
+      )}
+    </div>
   );
 };
 

@@ -26,10 +26,15 @@ const markNotificationAsRead = async (id) => {
 const useNotifications = (userId) => {
   const queryClient = useQueryClient();
 
-  const { data: notifications, isLoading } = useQuery({
+  const {
+    data: notifications,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["notifications", userId],
     queryFn: () => fetchNotifications(userId),
     enabled: !!userId,
+    refetchInterval: 30000, // Refetch every 30 seconds
   });
 
   const markAsRead = useMutation({
@@ -64,6 +69,7 @@ const useNotifications = (userId) => {
     notifications,
     loading: isLoading,
     markAsRead: (id) => markAsRead.mutate(id),
+    refetchNotifications: refetch,
   };
 };
 
