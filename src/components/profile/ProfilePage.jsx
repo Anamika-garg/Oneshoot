@@ -7,12 +7,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserIcon, Shield, Bell, ShoppingCart } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import useNotifications from "@/hooks/useNotifications";
-import Loader from "@/components/ui/loader";
+
 import ProfileOverview from "./ProfileOverview";
 import SecurityTab from "./SecurityTab";
 import NotificationsTab from "./NotificationsTab";
 import OrdersTab from "./OrdersTab";
 import { NotificationProvider } from "@/app/context/NotificationContext";
+import Loader from "../ui/Loader";
 
 const supabase = createClient();
 
