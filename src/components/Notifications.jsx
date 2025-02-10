@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, Check } from "lucide-react";
-import Loader from "./ui/loader";
+import { Bell, Check, Tag } from "lucide-react";
+import Loader from "./ui/Loader";
+
 
 const NotificationCenter = ({ userId, notifications, markAsRead }) => {
   const [showAll, setShowAll] = useState(false);
@@ -22,6 +23,15 @@ const NotificationCenter = ({ userId, notifications, markAsRead }) => {
 
   const handleMarkAsRead = async (id) => {
     await markAsRead(id);
+  };
+
+  const getNotificationIcon = (itemType) => {
+    switch (itemType) {
+      case "promoCode":
+        return <Tag className={`h-5 w-5`} />;
+      default:
+        return <Bell className={`h-5 w-5`} />;
+    }
   };
 
   return (
@@ -45,9 +55,7 @@ const NotificationCenter = ({ userId, notifications, markAsRead }) => {
             }`}
           >
             <div className='flex items-center gap-3'>
-              <Bell
-                className={`h-5 w-5 ${notification.read ? "text-gray-400" : "text-black"}`}
-              />
+              {getNotificationIcon(notification.item_type)}
               <span
                 className={`${notification.read ? "text-gray-400" : "text-black font-medium"}`}
               >
