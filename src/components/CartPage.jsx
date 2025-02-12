@@ -11,12 +11,14 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { Checkmark } from "./ui/Checkmark";
 import { client as sanityClient, getPromoCode } from "@/lib/sanity";
+import { useAuth } from "@/app/context/AuthContext";
 
 // Initialize Supabase client
 const supabase = createClient();
 
 export default function CartPage() {
   const { cart, removeFromCart, clearCart } = useCart();
+  const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [showNOWPayments, setShowNOWPayments] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
@@ -36,6 +38,9 @@ export default function CartPage() {
     }
   }, [showSuccessPopup, router]);
 
+  if (!user) {
+    return null;
+  }
   const handleProceedToPayment = () => {
     if (!email.trim()) {
       toast.error("Please enter your email address");

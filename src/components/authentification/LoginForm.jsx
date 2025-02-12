@@ -5,18 +5,19 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
 import { login } from "@/app/actions/auth-actions";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/utils/supabase/client";
+import { useCustomToast } from "@/hooks/useCustomToast";
 
 const supabase = createClient();
 
 function LoginForm({ switchMode }) {
   const [loading, setLoading] = useState(false);
   const queryClient = useQueryClient();
+  const customToast = useCustomToast();
   const router = useRouter();
 
   const {
@@ -41,7 +42,9 @@ function LoginForm({ switchMode }) {
       const { success, error, user, session } = await login(formData);
 
       if (!success) {
-        toast.error("Login failed");
+        customToast.error(
+          "Login failed. Please check your credentials and try again."
+        );
         setLoading(false);
         return;
       }
@@ -53,13 +56,14 @@ function LoginForm({ switchMode }) {
 
       // Update React Query cache
       queryClient.setQueryData(["user"], user);
-      
-      toast.success("Signed in successfully!");
+
+      customToast.success("Signed in successfully!");
       router.refresh(); // Force a router refresh
       setTimeout(() => router.push("/account"), 1000);
     } catch (error) {
-      console.error("Login error:", error);
-      toast.error("An error occurred during login");
+      customToast.error(
+        "An unexpected error occurred during login. Please try again later."
+      );
     } finally {
       setLoading(false);
     }

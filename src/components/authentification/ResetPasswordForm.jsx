@@ -4,10 +4,12 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { useCustomToast } from "@/hooks/useCustomToast";
+import { sendPasswordResetEmail } from "@/app/actions/auth-actions";
 
 const ResetPasswordForm = ({ switchMode }) => {
-  const { toast } = useToast();
+  const customToast = useCustomToast();
+
   const {
     register,
     handleSubmit,
@@ -20,22 +22,17 @@ const ResetPasswordForm = ({ switchMode }) => {
 
   const onSubmit = async (data) => {
     try {
-      // Replace with your password reset logic
-      toast({
-        title: "Password reset link sent!",
-        description: "Check your email for further instructions.",
-        variant: "success",
-      });
-      // Optionally switch back to login mode after sending reset link
-      switchMode("login");
+      const result = await sendPasswordResetEmail(data.email);
+      if (result.success) {
+        customToast.success("Check your email for further instructions.");
+        switchMode("login");
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to send password reset link.",
-        variant: "destructive",
-      });
+      customToast.error("Failed to send password reset link.");
     }
-  };
+  };;
 
   return (
     <form
@@ -85,7 +82,7 @@ const ResetPasswordForm = ({ switchMode }) => {
           type='button'
           onClick={() => switchMode("login")}
           variant='link'
-          className='text-orange hover:text-orange-600'
+          className='text-orange hover:text-yellow'
         >
           Back to Login
         </Button>

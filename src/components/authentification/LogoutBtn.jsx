@@ -3,14 +3,15 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
+import { useCustomToast } from "@/hooks/useCustomToast";
 
 const supabase = createClient();
 
 const LogoutBtn = () => {
   const queryClient = useQueryClient();
+  const customToast = useCustomToast();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -23,14 +24,13 @@ const LogoutBtn = () => {
       // Update the user state immediately
       queryClient.setQueryData(["user"], null);
 
-      toast.success("Logged out successfully");
+      customToast.success("Logged out successfully");
 
       // Navigate to login page
       router.push("/login");
       router.refresh();
     } catch (error) {
-      console.error("Error signing out:", error.message);
-      toast.error("Error logging out");
+      customToast.error("Error logging out");
     }
   };
 

@@ -35,9 +35,8 @@ export async function login(formData) {
   };
 
   // Pass correct structure to Supabase
-  const { data: signInData, error } = await supabase.auth.signInWithPassword(
-    data
-  );
+  const { data: signInData, error } =
+    await supabase.auth.signInWithPassword(data);
 
   return {
     error: error?.message || "Authentication failed",
@@ -53,3 +52,16 @@ export async function logout() {
   redirect("/login");
 }
 
+export async function sendPasswordResetEmail(email) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/reset-password`,
+  });
+
+  if (error) {
+    return { error: error.message, success: false };
+  }
+
+  return { success: true, data };
+}

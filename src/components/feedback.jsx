@@ -54,9 +54,9 @@ function Feedback() {
     return () => window.removeEventListener("resize", handleResize);
   }, [handleResize]);
 
-  const scrollNext = () => {
+  const scrollNext = useCallback(() => {
     if (emblaApi) emblaApi.scrollNext();
-  };
+  }, [emblaApi]);
 
   const staggerVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -105,25 +105,29 @@ function Feedback() {
                   animate={isInView ? "visible" : "hidden"}
                   custom={index + 1}
                   className={clsx(
-                    "flex-shrink-0 min-w-0",
+                    "flex-shrink-0 min-w-0 relative z-50",
                     isMobile ? "w-full" : "flex-[0_0_330px]"
                   )}
                 >
-                  <Card className='p-6 bg-black border-none max-w-80 h-full'>
+                  <Card className='p-6 bg-black border-none max-w-80 h-full flex flex-col relative z-50'>
                     <div className='text-8xl font-semibold bg-gradient-to-b md:bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent font-montserrat mb-2'>
                       “
                     </div>
-                    <p className='text-white mb-6 text-base'>{feedback.text}</p>
-                    <time className='block text-white/60 mb-6'>
-                      {feedback.date}
-                    </time>
-                    <div className='flex gap-1'>
-                      {Array.from({ length: feedback.rating }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className='w-5 h-5 fill-current text-yellow'
-                        />
-                      ))}
+                    <p className='text-white mb-6 text-base flex-grow'>
+                      {feedback.text}
+                    </p>
+                    <div className='mt-auto'>
+                      <time className='block text-white/60 mb-2'>
+                        {feedback.date}
+                      </time>
+                      <div className='flex gap-1 mt-8'>
+                        {Array.from({ length: feedback.rating }).map((_, i) => (
+                          <Star
+                            key={i}
+                            className='w-5 h-5 fill-current text-yellow'
+                          />
+                        ))}
+                      </div>
                     </div>
                   </Card>
                 </motion.div>
@@ -149,8 +153,8 @@ function Feedback() {
         initial={{ opacity: 0 }}
         animate={isInView ? { opacity: 1 } : {}}
         transition={{ duration: 1 }}
-        className='absolute -bottom-32 -left-72 md:-left-40 h-[320px] w-[320px] rounded-full blur-[200px] opacity-70 pointer-events-none bg-orange'
-      ></motion.div>
+        className='absolute -bottom-32 -left-72 md:-left-40 h-[320px] w-[320px] rounded-full blur-[200px] opacity-70 pointer-events-none bg-orange z-10'
+      />
     </motion.section>
   );
 }

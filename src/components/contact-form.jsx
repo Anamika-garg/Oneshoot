@@ -1,24 +1,50 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useCustomToast } from "@/hooks/useCustomToast";
+import { ArrowRight, Loader2 } from "lucide-react";
 
 export function ContactForm() {
-  const [formData, setFormData] = useState({
-    name: "",
-    message: "",
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm({
+    defaultValues: {
+      name: "",
+      message: "",
+    },
   });
 
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, amount: 0.1 });
+  const customToast = useCustomToast();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Handle form submission
-    console.log(formData);
+  const onSubmit = async (data) => {
+    try {
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        customToast.success("Your message has been sent successfully!");
+        reset();
+      } else {
+        throw new Error("Failed to send email");
+      }
+    } catch (error) {
+      console.error("Error sending email:", error);
+      customToast.error("Failed to send your message. Please try again later.");
+    }
   };
 
   const inputClasses =
@@ -45,7 +71,7 @@ export function ContactForm() {
       className='font-manrope relative bg-transparent z-0 overflow-x-clip'
     >
       <div className='container px-4 mx-auto pt-10 pb-32 md:pb-20'>
-        <div className='flex flex-col md:flex-row items-start justify-between relative z-10'>
+        <div className='flex flex-col md:flex-row items-start justify-between relative z-50'>
           <motion.h2
             variants={staggerVariants}
             initial='hidden'
@@ -61,7 +87,7 @@ export function ContactForm() {
             initial='hidden'
             animate={isInView ? "visible" : "hidden"}
             custom={1}
-            onSubmit={handleSubmit}
+            onSubmit={handleSubmit(onSubmit)}
             className='space-y-6 max-w-md w-full rounded-[18px] bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart p-[1px]'
           >
             <div className='bg-black rounded-[17px] p-8 space-y-6 flex flex-col items-center'>
@@ -81,11 +107,13 @@ export function ContactForm() {
                 <Input
                   placeholder='Telegram Name'
                   className={inputClasses}
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
+                  {...register("name", { required: "Name is required" })}
                 />
+                {errors.name && (
+                  <p className='text-red-500 text-sm mt-1'>
+                    {errors.name.message}
+                  </p>
+                )}
               </motion.div>
 
               <motion.div
@@ -96,25 +124,43 @@ export function ContactForm() {
                 <Textarea
                   placeholder='Additional Comment'
                   className={inputClasses}
-                  value={formData.message}
-                  onChange={(e) =>
-                    setFormData({ ...formData, message: e.target.value })
-                  }
+                  {...register("message", { required: "Message is required" })}
                 />
+                {errors.message && (
+                  <p className='text-red-500 text-sm mt-1'>
+                    {errors.message.message}
+                  </p>
+                )}
               </motion.div>
               <motion.div
                 variants={staggerVariants}
                 custom={5}
                 className='w-full flex justify-center'
               >
-                <Button
+                <motion.button
                   type='submit'
-                  className='w-full max-w-32 bg-gradient-to-b from-gradientStart to-gradientMid text-black'
-                  whileHover={{ scale: 1.05 }}
+                  className='w-full max-w-32 text-black h-10 px-4 py-2 inline-flex items-center justify-center uppercase gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-300 ease-in-out focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0'
+                  style={{
+                    background:
+                      "linear-gradient(to bottom, var(--gradient-start), var(--gradient-mid))",
+                  }}
+                  initial={{
+                    "--gradient-start": "#FFDD55",
+                    "--gradient-mid": "#FFA500",
+                  }}
+                  whileHover={{
+                    "--gradient-start": "#FFA500",
+                    "--gradient-mid": "#FFDD55",
+                    transition: { duration: 0.2, ease: "easeInOut" },
+                  }}
                   whileTap={{ scale: 0.95 }}
+                  disabled={isSubmitting}
                 >
-                  SEND
-                </Button>
+                  {isSubmitting && (
+                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  )}
+                  Submit
+                </motion.button>
               </motion.div>
             </div>
           </motion.form>
