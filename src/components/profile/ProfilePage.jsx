@@ -113,7 +113,7 @@ const ProfilePage = () => {
               <div className='flex items-center gap-1'>
                 <span>Notifications</span>
                 {unreadCount > 0 && (
-                  <span className='bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 w-5 h-5'>
+                  <span className='bg-red-500 text-white text-xs rounded-full px-1 py-0.5 w-5 h-5'>
                     {unreadCount}
                   </span>
                 )}

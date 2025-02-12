@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { Checkmark } from "./ui/Checkmark";
-import { client as sanityClient, getPromoCode } from "@/lib/sanity";
+import { client as sanityClient, getPromoCode, client } from "@/lib/sanity";
 import { useAuth } from "@/app/context/AuthContext";
 
 // Initialize Supabase client
@@ -107,6 +107,28 @@ export default function CartPage() {
     }
   };
 
+  const fetchProductDetails = async (productId, variantId) => {
+    const productQuery = `
+      *[_type == "product" && _id == $productId][0]{
+        name,
+        "variant": *[_type == "productVariant" && _id == $variantId][0]{
+          name,
+          downloadFilePath
+        }
+      }
+    `;
+    const productData = await client.fetch(productQuery, {
+      productId,
+      variantId,
+    });
+
+    return {
+      productName: productData?.name || "Unknown Product",
+      variantName: productData?.variant?.name || "Unknown Variant",
+      downloadFilePath: productData?.variant?.downloadFilePath || "",
+    };
+  };
+
   const handleTestPayment = async () => {
     if (!email.trim()) {
       toast.error("Please enter your email address");
@@ -170,6 +192,26 @@ export default function CartPage() {
           throw new Error(
             `Failed to create notification: ${notificationError.message}`
           );
+
+          const productDetails = await fetchProductDetails(item.id, item.variantId)
+
+        // Send confirmation email
+        const response = await fetch("/api/send-order-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: user.email,
+            productName: productDetails.productName,
+            variantName: productDetails.variantName,
+            downloadFilePath: productDetails.downloadFilePath,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to send confirmation email");
+        }
       }
 
       clearCart();
