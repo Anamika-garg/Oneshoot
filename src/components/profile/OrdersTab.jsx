@@ -69,7 +69,7 @@ const OrdersTab = ({ user }) => {
   }
 
   return (
-    <Card className='bg-lightBlack border-none'>
+    <Card className='bg-lightBlack border-none mt-10'>
       <CardContent className='p-6'>
         <h2 className='text-2xl font-semibold mb-4 text-white'>
           Order History

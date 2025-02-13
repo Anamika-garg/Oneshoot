@@ -3,21 +3,23 @@ import { motion } from "framer-motion";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function ProductCard({ product, onClick, index }) {
+export function ProductCard({ product, onClick, index, total }) {
   return (
     <motion.div
-      variants={{
-        hidden: { opacity: 0, y: 50 },
-        visible: { opacity: 1, y: 0 },
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: 0.3,
+        ease: [0.25, 0.1, 0.25, 1], // Custom easing function for a smooth slide
+        delay: index * 0.1, // Delay each card's animation based on its index
       }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-      className='relative rounded-xl bg-[#0E0E0E] overflow-hidden group font-manrope cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange transition-all h-full'
+      className='relative rounded-xl bg-lightBlack overflow-hidden group font-manrope cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange transition-all h-full'
       onClick={() => onClick(product)}
     >
       <div className='absolute inset-0 rounded-xl bg-gradient-to-br from-gradientStart via-gradientMid to-gradientStart opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
 
       <div className='relative z-10 p-[1px] rounded-xl h-full'>
-        <div className='bg-[#0E0E0E] rounded-xl p-3 flex flex-col h-full'>
+        <div className='bg-lightBlack rounded-xl p-3 flex flex-col h-full'>
           <div className='absolute top-0 left-1/2 transform -translate-x-1/2 z-10'>
             <div className='bg-orange text-black font-bold text-sm px-4 py-1 whitespace-nowrap'>
               from {product.basePrice}$

@@ -4,7 +4,7 @@ import UpdateEmailForm from "../security/UpdateEmailForm";
 
 const SecurityTab = ({ currentEmail }) => {
   return (
-    <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+    <div className='grid grid-cols-1 mt-10 md:grid-cols-3 gap-6'>
       <Card className='md:col-span-2 border-none'>
         <CardContent className='p-6 bg-lightBlack rounded-lg'>
           <h2 className='text-2xl font-semibold mb-6 text-white'>

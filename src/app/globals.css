@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --font-manrope: 'Manrope', sans-serif;
-  --font-inter: 'Inter', sans-serif;
+  --font-manrope: "Manrope", sans-serif;
+  --font-inter: "Inter", sans-serif;
 }
 
 @layer base {

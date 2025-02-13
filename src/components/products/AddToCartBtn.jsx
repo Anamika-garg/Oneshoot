@@ -55,7 +55,7 @@ export const AddToCartButton = ({
               onClick={() => {
                 removeFromCart(item.id, item.variantId, quantity);
                 customToast.success("Item removed from cart");
-                t.dismiss();
+                t?.dismiss();
               }}
             >
               Undo
@@ -65,7 +65,7 @@ export const AddToCartButton = ({
               size='sm'
               onClick={() => {
                 router.push("/cart");
-                t.dismiss();
+                t?.dismiss();
               }}
             >
               View Cart

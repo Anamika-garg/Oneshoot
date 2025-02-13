@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { motion, useInView, AnimatePresence } from "framer-motion";
+import { motion, useInView, useAnimation } from "framer-motion";
 import { getCategories, getProducts } from "@/lib/sanity";
 import { ProductModal } from "./products/ProductsModal";
 import { ProductCard } from "./products/ProductCard";
@@ -12,6 +12,7 @@ export function ProductGrid() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, amount: 0.1 });
+  const controls = useAnimation();
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -22,6 +23,12 @@ export function ProductGrid() {
     queryKey: ["products"],
     queryFn: getProducts,
   });
+  
+  useEffect(() => {
+    if (isInView) {
+      controls.start("visible");
+    }
+  }, [isInView, controls]);
 
   const filteredProducts =
     selectedCategory === "All"
@@ -37,6 +44,10 @@ export function ProductGrid() {
 
   const handleCategoryClick = (category) => {
     setSelectedCategory(category);
+    controls.set("hidden");
+    setTimeout(() => {
+      controls.start("visible");
+    }, 50);
   };
 
   const handleProductClick = (product) => {
@@ -127,7 +138,7 @@ export function ProductGrid() {
           key={selectedCategory}
           variants={containerVariants}
           initial='hidden'
-          animate='visible'
+          animate={controls}
           className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'
         >
           {filteredProducts.map((product, index) => (
@@ -136,6 +147,7 @@ export function ProductGrid() {
               product={product}
               onClick={handleProductClick}
               index={index}
+              total={filteredProducts.length}
             />
           ))}
         </motion.div>

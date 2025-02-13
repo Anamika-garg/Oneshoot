@@ -7,6 +7,7 @@ import { createClient } from "@/utils/supabase/client";
 import { AuthProvider } from "./context/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 import { CartProvider } from "./context/CartContext";
+import LenisProvider from "@/components/LenisProvider";
 
 export function AppProvider({ children }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -30,13 +31,15 @@ export function AppProvider({ children }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <CartProvider>
-          {children}
-          <Toaster />
-        </CartProvider>
-      </AuthProvider>
-      <ReactQueryDevtools initialIsOpen={false} />
+      <LenisProvider>
+        <AuthProvider>
+          <CartProvider>
+            {children}
+            <Toaster />
+          </CartProvider>
+        </AuthProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </LenisProvider>
     </QueryClientProvider>
   );
 }

@@ -4,6 +4,7 @@ import Navbar from "@/components/navigation/header";
 
 import { Footer } from "@/components/footer";
 import { AppProvider } from "./AppProvider";
+import { PageTransition, MotionProvider } from "@/components/PageTransition";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -31,12 +32,14 @@ export default function RootLayout({ children }) {
       <body
         className={`${manrope.variable} ${inter.variable} ${montserrat.variable} antialiased bg-black font-manrope`}
       >
-        <AppProvider>
-          <Navbar />
-          {children}
+        <MotionProvider>
+          <AppProvider>
+            <Navbar />
+            <PageTransition>{children}</PageTransition>
 
-          <Footer />
-        </AppProvider>
+            <Footer />
+          </AppProvider>
+        </MotionProvider>
       </body>
     </html>
   );
