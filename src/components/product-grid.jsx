@@ -1,18 +1,20 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { motion, useInView, useAnimation } from "framer-motion";
+import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { getCategories, getProducts } from "@/lib/sanity";
 import { ProductModal } from "./products/ProductsModal";
 import { ProductCard } from "./products/ProductCard";
+import AnimatedText from "./ui/AnimatedText";
+import { Button } from "./ui/button";
 
 export function ProductGrid() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const sectionRef = useRef(null);
-  const isInView = useInView(sectionRef, { once: true, amount: 0.1 });
-  const controls = useAnimation();
+  const router = useRouter();
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -23,17 +25,13 @@ export function ProductGrid() {
     queryKey: ["products"],
     queryFn: getProducts,
   });
-  
-  useEffect(() => {
-    if (isInView) {
-      controls.start("visible");
-    }
-  }, [isInView, controls]);
 
   const filteredProducts =
     selectedCategory === "All"
       ? products
       : products.filter((product) => product.category === selectedCategory);
+
+  const displayedProducts = filteredProducts.slice(0, 8);
 
   const getCategoryClass = (categoryName) =>
     `px-4 py-2 text-lg md:text-xl relative transition-all duration-300 ${
@@ -44,10 +42,6 @@ export function ProductGrid() {
 
   const handleCategoryClick = (category) => {
     setSelectedCategory(category);
-    controls.set("hidden");
-    setTimeout(() => {
-      controls.start("visible");
-    }, 50);
   };
 
   const handleProductClick = (product) => {
@@ -58,44 +52,36 @@ export function ProductGrid() {
     setSelectedProduct(null);
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.3,
-      },
-    },
+  const handleLoadMore = () => {
+    router.push("/products");
   };
 
   return (
     <motion.section
       ref={sectionRef}
       initial={{ opacity: 0 }}
-      animate={isInView ? { opacity: 1 } : {}}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true }}
       transition={{ duration: 0.5 }}
       className='py-20 bg-black min-h-screen'
     >
       <div className='container px-4 mx-auto'>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5 }}
-          className='text-center mb-12'
-        >
-          <h2 className='text-xl font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent mb-2'>
+        <AnimatedText>
+          <h2 className='text-xl font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent mb-2 text-center'>
             OUR OFFERS
           </h2>
-          <p className='text-4xl font-bold text-white tracking-wider'>
+        </AnimatedText>
+        <AnimatedText>
+          <p className='text-4xl font-bold text-white tracking-wider text-center mb-12'>
             EXPLORE PRODUCTS
           </p>
-        </motion.div>
+        </AnimatedText>
 
         {/* Categories */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.2 }}
           className='flex flex-wrap justify-center gap-4 mb-12 max-w-4xl mx-auto'
         >
@@ -134,23 +120,42 @@ export function ProductGrid() {
         </motion.div>
 
         {/* Products Grid */}
-        <motion.div
-          key={selectedCategory}
-          variants={containerVariants}
-          initial='hidden'
-          animate={controls}
-          className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'
-        >
-          {filteredProducts.map((product, index) => (
-            <ProductCard
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+          {displayedProducts.map((product, index) => (
+            <motion.div
               key={product._id}
-              product={product}
-              onClick={handleProductClick}
-              index={index}
-              total={filteredProducts.length}
-            />
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+            >
+              <ProductCard
+                product={product}
+                onClick={handleProductClick}
+                index={index}
+                total={displayedProducts.length}
+              />
+            </motion.div>
           ))}
-        </motion.div>
+        </div>
+
+        {/* Load More Button */}
+        {filteredProducts.length > 8 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className='text-center mt-8'
+          >
+            <Button
+              onClick={handleLoadMore}
+              className='px-6 py-3 bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart text-black rounded-md font-semibold hover:opacity-70 transition-opacity'
+            >
+              Load More
+            </Button>
+          </motion.div>
+        )}
 
         {selectedProduct && (
           <ProductModal product={selectedProduct} onClose={handleCloseModal} />

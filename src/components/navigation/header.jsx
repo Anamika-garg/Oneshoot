@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
@@ -12,15 +12,26 @@ import NavAvatar from "./NavAvatar";
 import LogoutBtn from "../authentification/LogoutBtn";
 import { HamburgerMenu } from "../ui/HamburgerMenu";
 
-
 const Navbar = () => {
   const pathname = usePathname();
+  const router = useRouter()
   const { user, isLoading } = useAuth();
   const { getCartCount } = useCart();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
   const cartCount = getCartCount();
+
+  useEffect(() => {
+    if (pathname === "/" && window.location.hash === "#feedback-section") {
+      setTimeout(() => {
+        const feedbackSection = document.getElementById("feedback-section");
+        if (feedbackSection) {
+          feedbackSection.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100); // Small delay to ensure the DOM is ready
+    }
+  }, [pathname]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -40,12 +51,25 @@ const Navbar = () => {
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
+  const handleVouchesClick = (e) => {
+    e.preventDefault();
+    if (pathname === "/") {
+      const feedbackSection = document.getElementById("feedback-section");
+      if (feedbackSection) {
+        feedbackSection.scrollIntoView({ behavior: "smooth" });
+      }
+    } else {
+      router.push("/#feedback-section");
+    }
+    closeMobileMenu();
+  };
+
   if (isLoading) return null;
 
   const navItems = [
     { href: "/", label: "Home" },
     { href: "/products", label: "Products" },
-    { href: "/vouches", label: "Vouches" },
+    { href: "#", label: "Vouches", onClick: handleVouchesClick },
     { href: "/faq", label: "FAQ" },
   ];
 
@@ -68,6 +92,7 @@ const Navbar = () => {
                   ? "text-orange"
                   : "text-white hover:text-gray-300"
               }`}
+              onClick={item.onClick}
             >
               {item.label}
             </Link>
