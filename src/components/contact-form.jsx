@@ -3,10 +3,25 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useCustomToast } from "@/hooks/useCustomToast";
 import { ArrowRight, Loader2 } from "lucide-react";
+
+// Define the validation schema
+const formSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Name must be at least 2 characters")
+    .regex(/^@/, "Telegram name must start with @")
+    .max(32, "Name must be less than 32 characters"),
+  message: z
+    .string()
+    .min(10, "Message must be at least 10 characters")
+    .max(500, "Message must be less than 500 characters"),
+});
 
 export function ContactForm() {
   const {
@@ -15,6 +30,7 @@ export function ContactForm() {
     formState: { errors, isSubmitting },
     reset,
   } = useForm({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       message: "",
@@ -107,7 +123,7 @@ export function ContactForm() {
                 <Input
                   placeholder='Telegram Name'
                   className={inputClasses}
-                  {...register("name", { required: "Name is required" })}
+                  {...register("name")}
                 />
                 {errors.name && (
                   <p className='text-red-500 text-sm mt-1'>
@@ -124,7 +140,7 @@ export function ContactForm() {
                 <Textarea
                   placeholder='Additional Comment'
                   className={inputClasses}
-                  {...register("message", { required: "Message is required" })}
+                  {...register("message")}
                 />
                 {errors.message && (
                   <p className='text-red-500 text-sm mt-1'>

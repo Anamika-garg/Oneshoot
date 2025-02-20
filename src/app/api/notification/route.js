@@ -4,9 +4,8 @@ import { createClient } from "@supabase/supabase-js";
 export async function POST(request) {
   console.log("Webhook received");
 
-  const supabaseUrl = "https://ugnqtphzgygdfzenwzfu.supabase.co";
-  const supabaseKey =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnbnF0cGh6Z3lnZGZ6ZW53emZ1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNzcyOTY4NywiZXhwIjoyMDUzMzA1Njg3fQ.XOcdktgh9I6tNunz8V2zplHDKHjLng_2ijwtji2de_g";
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
     console.error("Supabase environment variables are not set");

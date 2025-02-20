@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 
-const IPN_SECRET = "1pI+F1oXVxc/FHwPg7TMRr4oPrY62wkZ";
+const IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET;
 
 export async function POST(request) {
   try {

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { AddToCartButton } from "@/components/products/AddToCartBtn";
 import { ChevronDown, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/AuthContext"; // Assuming you have an AuthContext
 
 export const ProductDetails = ({
   product,
@@ -11,9 +13,15 @@ export const ProductDetails = ({
   includedFeatures,
 }) => {
   const [quantity, setQuantity] = useState(1);
+  const router = useRouter();
+  const { user } = useAuth(); // Get the user from AuthContext
 
   const handleQuantityChange = (event) => {
     setQuantity(Number(event.target.value));
+  };
+
+  const handleLoginClick = () => {
+    router.push("/login?mode=login");
   };
 
   return (
@@ -54,12 +62,21 @@ export const ProductDetails = ({
             </div>
           </div>
 
-          <AddToCartButton
-            product={product}
-            variant={variant}
-            quantity={quantity}
-            className='w-full bg-orange text-black py-3 rounded-md font-semibold hover:bg-orange/90 transition-colors'
-          />
+          {user ? (
+            <AddToCartButton
+              product={product}
+              variant={variant}
+              quantity={quantity}
+              className='w-full bg-orange text-black py-3 rounded-md font-semibold hover:bg-orange/90 transition-colors'
+            />
+          ) : (
+            <button
+              onClick={handleLoginClick}
+              className='w-full bg-yellow px-6 py-3 text-black rounded-md font-semibold hover:bg-yellow-400 transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-400'
+            >
+              Login to Purchase
+            </button>
+          )}
         </div>
       </div>
 

@@ -6,8 +6,7 @@ const API_URL = "https://api.nowpayments.io/v1/invoice";
 
 export async function POST(request) {
   try {
-    const { price_amount, order_id, order_description } =
-      await request.json();
+    const { price_amount, order_id, order_description } = await request.json();
 
     const response = await axios.post(
       API_URL,
@@ -16,10 +15,10 @@ export async function POST(request) {
         price_currency: "usd",
         order_id,
         order_description,
-        ipn_callback_url: `https://db72-188-163-51-64.ngrok-free.app/api/nowpayments-webhook`,
-        success_url: `https://db72-188-163-51-64.ngrok-free.app/payment-success`,
-        cancel_url: `https://db72-188-163-51-64.ngrok-free.app/cart`,
-        partially_paid_url: `https://db72-188-163-51-64.ngrok-free.app/payment-partial`,
+        ipn_callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/nowpayments-webhook`,
+        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-success`,
+        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cart`,
+        partially_paid_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-partial`,
       },
       {
         headers: {

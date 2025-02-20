@@ -9,7 +9,7 @@ export async function POST(request) {
     const { name, message } = await request.json();
 
     const data = await resend.emails.send({
-      from: "Your Company <onboarding@resend.dev>",
+      from: "OneShot Store <dontreply@oneshot.sale>",
       to: process.env.NEXT_PUBLIC_OWNER_EMAIL,
       subject: "New Contact Form Submission",
       react: ContactFormEmail({ name, message }),
