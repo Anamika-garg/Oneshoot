@@ -1,3 +1,4 @@
+// sanity.config.js
 import {defineConfig} from 'sanity'
 import {structureTool} from 'sanity/structure'
 import {visionTool} from '@sanity/vision'
@@ -7,8 +8,6 @@ export default defineConfig({
   name: 'default',
   title: 'one-shoot-app',
   basePath: '/admin',
-  staticPath: '/admin/static', // Add this line for subpath deployment
-
   projectId: 'bhxza4n3',
   dataset: 'production',
 
@@ -18,15 +17,16 @@ export default defineConfig({
     types: schemaTypes,
   },
 
-  // Updated CORS configuration to handle both development and production
   cors: {
-    origins: [
-      'http://localhost:3000',
-      'https://oneshot.sale', // Add your production domain
-      'https://www.oneshot.sale', // Include www subdomain if needed
-    ],
-    methods: ['GET', 'POST', 'PATCH', 'DELETE'], // Added common methods needed for Sanity operations
-    headers: ['Content-Type', 'Authorization'],
-    credentials: true,
+    origins: ['http://localhost:3000', 'https://oneshot.sale'],
+    credentials: true
   },
+
+  // Add this to ensure proper static file serving
+  vite: {
+    server: {
+      host: 'localhost',
+      port: 3333
+    }
+  }
 })
