@@ -5,10 +5,8 @@
   "type": "module",
   "scripts": {
     "clean": "rm -rf public/admin .next sanity/dist",
-    "build:sanity": "cd sanity && NODE_ENV=production sanity build ../public/admin -y",
-    "build:next": "next build",
-    "build": "npm run build:sanity && npm run build:next",
-    "dev": "concurrently \"next dev\" \"cd sanity && sanity dev --port 3333\"",
+    "dev": "next dev",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
