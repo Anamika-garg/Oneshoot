@@ -54,7 +54,7 @@ export default function Hero() {
               initial='hidden'
               animate={isInView ? "visible" : "hidden"}
               custom={0}
-              className='max-w-80 w-full bg-gradient-to-r from-[rgba(255,255,255,0.2)] to-[#67676733] px-6 py-2.5 rounded-md mb-8'
+              className='max-w-80 w-full bg-gradient-to-r from-[rgba(255,255,255,0.23)] to-[#6767671d] px-6 py-2.5 rounded-md mb-8'
             >
               <span className='text-white font-inter text-base flex items-center gap-2'>
                 <svg
