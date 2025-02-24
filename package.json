@@ -10,8 +10,7 @@
     "build": "npm run build:sanity && npm run build:next",
     "dev": "concurrently \"next dev\" \"cd sanity && sanity dev --port 3333\"",
     "start": "next start",
-    "lint": "next lint",
-    "socket": "node socketServer.js"
+    "lint": "next lint"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
