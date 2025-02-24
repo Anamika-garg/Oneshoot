@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "sanity dev",
     "start": "sanity start",
-    "build": "sanity build --output dist -y",
+  "build": "sanity build ../public/admin -y",
     "deploy": "sanity deploy",
     "deploy-graphql": "sanity graphql deploy"
   },
