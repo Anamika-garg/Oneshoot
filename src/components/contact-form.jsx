@@ -64,7 +64,7 @@ export function ContactForm() {
   };
 
   const inputClasses =
-    "bg-[#1F1F1E] border-none text-white placeholder:text-orange/40 focus-visible:ring-1 focus-visible:ring-orange focus-visible:ring-offset-0 focus:outline-none transition-all duration-200";
+    "bg-[#1F1F1E] border-none text-white placeholder:text-orange/40 focus-orange focus:outline-none transition-all duration-200";
 
   const staggerVariants = {
     hidden: { opacity: 0, y: 20 },

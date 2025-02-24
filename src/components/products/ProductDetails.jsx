@@ -4,7 +4,8 @@ import { useState } from "react";
 import { AddToCartButton } from "@/components/products/AddToCartBtn";
 import { ChevronDown, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/context/AuthContext"; // Assuming you have an AuthContext
+import { useAuth } from "@/app/context/AuthContext";
+import Image from "next/image";
 
 export const ProductDetails = ({
   product,
@@ -14,7 +15,7 @@ export const ProductDetails = ({
 }) => {
   const [quantity, setQuantity] = useState(1);
   const router = useRouter();
-  const { user } = useAuth(); // Get the user from AuthContext
+  const { user } = useAuth();
 
   const handleQuantityChange = (event) => {
     setQuantity(Number(event.target.value));
@@ -25,25 +26,34 @@ export const ProductDetails = ({
   };
 
   return (
-    <div className='grid grid-cols-1 lg:grid-cols-2 gap-12'>
+    <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-6 lg:gap-12'>
       {/* Left Column - Product Card */}
-      <div className='relative rounded-2xl bg-transparent p-6'>
-        <div className='relative h-[300px] mb-6 p-6 overflow-hidden rounded-xl bg-lightBlack'>
-          <div className='absolute top-0 left-1/2 -translate-x-1/2 bg-orange px-6 py-1 '>
-            <span className='text-black font-bold text-2xl'>
-              ${variant.price}
-            </span>
-          </div>
-          <img
+      <div className='relative rounded-2xl bg-transparent sm:px-4 p-6'>
+        {/* Price Tag */}
+        <div className='absolute top-2  left-1/2 -translate-x-1/2 bg-orange px-4 sm:px-6 py-1 rounded-md shadow-md z-10'>
+          <span className='text-black font-bold text-lg sm:text-2xl'>
+            ${variant.price}
+          </span>
+        </div>
+
+        {/* Product Image */}
+        <div className='relative w-full h-auto max-h-[400px] aspect-[4/3] sm:aspect-[16/9] mb-4 sm:mb-6 overflow-hidden rounded-xl bg-lightBlack'>
+          <Image
             src={product.image || "/placeholder.svg"}
             alt={product.name}
-            className='w-full h-full object-cover border border-orange'
+            layout='fill'
+            objectFit='cover'
+            className='w-full h-full object-cover border border-orange rounded-xl'
           />
         </div>
 
+        {/* Quantity & Actions */}
         <div className='space-y-4 w-full'>
           <div className='space-y-2'>
-            <label className='text-white text-lg' htmlFor='quantity-select'>
+            <label
+              className='text-white text-base sm:text-lg'
+              htmlFor='quantity-select'
+            >
               Quantity
             </label>
             <div className='relative'>
@@ -81,30 +91,32 @@ export const ProductDetails = ({
       </div>
 
       {/* Right Column - Product Details */}
-      <div className='space-y-8'>
+      <div className='space-y-6 sm:space-y-8 px-4 sm:px-0'>
         <div>
-          <div className='inline-block bg-orange px-4 py-1 rounded-md mb-6'>
-            <span className='text-black font-medium text-xl'>INCLUDED:</span>
+          <div className='inline-block bg-orange px-3 sm:px-4 py-1 rounded-md mb-4 sm:mb-6'>
+            <span className='text-black font-medium text-lg sm:text-xl'>
+              INCLUDED:
+            </span>
           </div>
 
-          <ul className='space-y-4 text-lg'>
+          <ul className='space-y-3 sm:space-y-4 text-base sm:text-lg'>
             {includedFeatures.map((feature, i) => (
               <li key={i} className='flex items-center gap-3'>
-                <Check className='h-8 w-8 text-orange' />
+                <Check className='h-6 sm:h-8 w-6 sm:w-8 text-orange' />
                 <span className='text-gray-200'>{feature}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        <div className='space-y-4 text-xl'>
-          <div className='flex justify-between items-center border border-t-white/10 border-b-white/10 border-x-0 py-4'>
+        <div className='space-y-3 sm:space-y-4 text-lg sm:text-xl'>
+          <div className='flex justify-between items-center border border-t-white/10 border-b-white/10 border-x-0 py-3 sm:py-4'>
             <span className='text-white'>Status:</span>
             <span className='bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent capitalize'>
               {variant.status}
             </span>
           </div>
-          <div className='flex justify-between items-center border border-b-white/10 border-x-0 border-t-0 pb-4 '>
+          <div className='flex justify-between items-center border border-b-white/10 border-x-0 border-t-0 pb-3 sm:pb-4'>
             <span className='text-white'>Category:</span>
             <span className='bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent uppercase'>
               {category ? product.category : "Uncategorized"}

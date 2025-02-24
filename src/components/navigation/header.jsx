@@ -74,8 +74,8 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className='fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm font-manrope'>
-      <div className='container mx-auto flex items-center justify-between p-4'>
+    <nav className='fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-md font-manrope'>
+      <div className=' mx-auto flex items-center justify-between p-4'>
         {/* Logo */}
         <Link href='/' className='text-white text-2xl font-bold'>
           <Image src='/logo.svg' alt='Logo' width={220} height={50} priority />
@@ -199,7 +199,7 @@ const Navbar = () => {
             >
               <ShoppingBasket className='h-6 w-6' />
               {cartCount > 0 && (
-                <span className='absolute -top-2 -right-2 bg-orange text-black text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'>
+                <span className='absolute -top-2 -right-2 bg-orange text-black text-xs font-bold rounded-full h-3 w-3 flex items-center justify-center'>
                   {cartCount}
                 </span>
               )}

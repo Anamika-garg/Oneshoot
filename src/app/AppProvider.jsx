@@ -8,6 +8,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 import { CartProvider } from "./context/CartContext";
 import LenisProvider from "@/components/LenisProvider";
+import { ProductProvider } from "./context/ProductContext";
 
 export function AppProvider({ children }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -34,8 +35,10 @@ export function AppProvider({ children }) {
       <LenisProvider>
         <AuthProvider>
           <CartProvider>
-            {children}
-            <Toaster />
+            <ProductProvider>
+              {children}
+              <Toaster />
+            </ProductProvider>
           </CartProvider>
         </AuthProvider>
         <ReactQueryDevtools initialIsOpen={false} />

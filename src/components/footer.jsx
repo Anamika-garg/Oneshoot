@@ -2,6 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 
 export function Footer() {
+  // Map nav items with a special case for "Vouches" that scrolls to the feedback section.
+  const navItems = [
+    { label: "Home", href: "/" },
+    { label: "Products", href: "/products" },
+    { label: "Vouches", href: "/#feedback-section" }, // anchor link to feedback section
+    { label: "FAQ", href: "/faq" },
+  ];
+
   return (
     <footer className='bg-transparent py-12 relative z-[1] font-manrope container w-full mx-auto'>
       <div className='px-4'>
@@ -23,15 +31,15 @@ export function Footer() {
           </div>
 
           <nav className='flex gap-6 font-manrope flex-col md:flex-row items-start text-lg font-medium'>
-            {["Home", "Products", "Vouches", "FAQ"].map((item) => (
+            {navItems.map((item) => (
               <Link
-                key={item}
-                href={`/${item.toLowerCase()}`}
+                key={item.label}
+                href={item.href}
                 className='text-lg text-white hover:text-orange/80 transition-colors'
-                aria-label={`Navigate to ${item}`}
+                aria-label={`Navigate to ${item.label}`}
                 tabIndex={0}
               >
-                {item}
+                {item.label}
               </Link>
             ))}
           </nav>

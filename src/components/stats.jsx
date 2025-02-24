@@ -69,7 +69,7 @@ export function Stats() {
               and fast, reliable support as your trusted partner.
             </p>
           </motion.div>
-          <div className='flex flex-col gap-10 md:gap-14 max-w-2xl w-full items-center md:items-end mt-8 md:mt-0'>
+          <div className='flex flex-col gap-10 md:gap-14 max-w-2xl w-full items-center md:items-end mt-8 md:mt-0 relative z-10'>
             {features.map((text, index) => (
               <motion.div
                 key={index}
@@ -100,13 +100,13 @@ export function Stats() {
           initial='hidden'
           animate={isInView ? "visible" : "hidden"}
           custom={5}
-          className='flex flex-col md:flex-row items-center gap-y-8 md:gap-x-24 mx-auto justify-center mt-16 md:mt-24'
+          className='flex flex-col md:flex-row items-center gap-y-8 md:gap-x-24 mx-auto justify-center mt-16 md:mt-24 '
         >
           {stats.map(({ value, label }, index) => (
             <motion.div
               key={index}
               whileHover={{ scale: 1.05 }}
-              className='font-inter text-3xl md:text-4xl font-extrabold text-white tracking-wider flex items-center gap-3 md:gap-4'
+              className='font-inter text-3xl md:text-4xl font-extrabold text-white tracking-wider flex items-center gap-3 md:gap-4 relative z-10'
             >
               {value}
               <span className='text-base md:text-xl font-manrope uppercase font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent pt-1'>
@@ -120,7 +120,7 @@ export function Stats() {
         initial={{ opacity: 0 }}
         animate={isInView ? { opacity: 1 } : {}}
         transition={{ duration: 1 }}
-        className='absolute bottom-1/2 md:bottom-20 -right-20 md:-right-40 h-80 md:h-[320px] w-80 md:w-[320px] rounded-full blur-[220px] md:blur-[200px] pointer-events-none bg-orange'
+        className='absolute bottom-1/2 md:bottom-20 -right-20 md:-right-40 h-80 md:h-[320px] w-80 md:w-[320px] rounded-full blur-[220px] md:blur-[200px] pointer-events-none bg-orange z-0'
       />
     </motion.section>
   );

@@ -9,9 +9,10 @@ import { ProductModal } from "./products/ProductsModal";
 import { ProductCard } from "./products/ProductCard";
 import AnimatedText from "./ui/AnimatedText";
 import { Button } from "./ui/button";
+import { useProductContext } from "@/app/context/ProductContext";
 
 export function ProductGrid() {
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const { selectedCategory, setSelectedCategory } = useProductContext();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const sectionRef = useRef(null);
   const router = useRouter();
@@ -22,8 +23,8 @@ export function ProductGrid() {
   });
 
   const { data: products = [] } = useQuery({
-    queryKey: ["products"],
-    queryFn: getProducts,
+    queryKey: ["products", selectedCategory],
+    queryFn: () => getProducts(selectedCategory),
   });
 
   const filteredProducts =

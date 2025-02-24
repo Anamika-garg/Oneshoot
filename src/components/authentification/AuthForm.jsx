@@ -44,7 +44,9 @@ const AuthForm = () => {
   };
 
   return (
-    <div className='min-h-screen flex items-center justify-center bg-black px-4 font-manrope relative overflow-hidden'>
+    <div
+      className={`min-h-screen flex items-center justify-center bg-black px-4 font-manrope relative overflow-x-clip ${mode === "signup" ? "mt-14 pt-4" : ""}`}
+    >
       {/* Background Gradient */}
       <div className='absolute right-0 -translate-x-14 bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart w-[440px] h-[440px] rounded-full blur-[300px] opacity-80' />
 

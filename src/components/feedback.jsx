@@ -153,7 +153,7 @@ function Feedback() {
         initial={{ opacity: 0 }}
         animate={isInView ? { opacity: 1 } : {}}
         transition={{ duration: 1 }}
-        className='absolute -bottom-32 -left-72 md:-left-40 h-[320px] w-[320px] rounded-full blur-[200px] opacity-70 pointer-events-none bg-orange z-10'
+        className='absolute -bottom-32 -left-72 md:-left-40 h-[320px] w-[320px] rounded-full blur-[200px] opacity-70 pointer-events-none bg-orange z-0'
       />
     </motion.section>
   );

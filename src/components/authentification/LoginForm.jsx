@@ -85,7 +85,7 @@ function LoginForm({ switchMode }) {
             id='email'
             type='email'
             placeholder='you@example.com'
-            className={`bg-[#0E0E0E] border-white/10 text-white focus-visible:ring-1 focus-visible:ring-offset-0 focus:outline-none transition-all duration-200 mt-2 ${
+            className={`bg-lightBlack border-white/10 text-white focus:border-orange outline-none transition-all duration-200 mt-2 ${
               errors.email ? "border-red-500" : ""
             }`}
             {...register("email", {
@@ -110,7 +110,7 @@ function LoginForm({ switchMode }) {
             id='password'
             type='password'
             placeholder='********'
-            className={`bg-[#0E0E0E] border-white/10 text-white focus-visible:ring-1 focus-visible:ring-offset-0 focus:outline-none transition-all duration-200 mt-2 ${
+            className={`bg-lightBlack border-white/10 text-white focus:border-orange transition-all duration-200 mt-2 ${
               errors.password ? "border-red-500" : ""
             }`}
             {...register("password", {
