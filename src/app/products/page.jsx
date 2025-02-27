@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getCategories, getProducts } from "@/lib/sanity";
 import { ProductModal } from "@/components/products/ProductsModal";
@@ -29,6 +29,16 @@ export default function ProductsPage() {
     queryFn: () => getProducts(selectedCategory),
   });
 
+  // Reliable scroll function
+  const scrollToTop = useCallback(() => {
+    requestAnimationFrame(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: "instant",
+      });
+    });
+  }, []);
+
   const handleProductClick = (product) => {
     setSelectedProduct(product);
   };
@@ -49,10 +59,23 @@ export default function ProductsPage() {
     indexOfLastProduct
   );
 
-  const handleCategoryClick = (category) => {
-    setSelectedCategory(category);
-    setCurrentPage(1);
-  };
+  const handleCategoryClick = useCallback(
+    (category) => {
+      setSelectedCategory(category);
+      setCurrentPage(1);
+      scrollToTop();
+    },
+    [setSelectedCategory, scrollToTop]
+  );
+
+  const handlePageChange = useCallback(
+    (page) => {
+      if (page === currentPage) return; // Prevent unnecessary updates
+      setCurrentPage(page);
+      scrollToTop();
+    },
+    [currentPage, scrollToTop]
+  );
 
   const getCategoryClass = (categoryName) =>
     `px-4 py-2 text-lg md:text-xl relative transition-all duration-300 bg-transparent ${
@@ -88,7 +111,11 @@ export default function ProductsPage() {
               aria-label='Show all categories'
             >
               <div
-                className={`relative ${selectedCategory === "All" ? "text-transparent bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text" : "text-gray-400 hover:text-white"} `}
+                className={`relative ${
+                  selectedCategory === "All"
+                    ? "text-transparent bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text"
+                    : "text-gray-400 hover:text-white"
+                } `}
               >
                 All
                 {selectedCategory === "All" && (
@@ -151,7 +178,7 @@ export default function ProductsPage() {
             <Pagination
               currentPage={currentPage}
               totalPages={Math.ceil(filteredProducts.length / ITEMS_PER_PAGE)}
-              onPageChange={setCurrentPage}
+              onPageChange={handlePageChange}
             />
           </FadeInWhenVisible>
         )}
