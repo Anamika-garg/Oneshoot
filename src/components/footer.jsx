@@ -11,8 +11,8 @@ export function Footer() {
   ];
 
   return (
-    <footer className='bg-transparent py-12 relative z-[1] font-manrope container w-full mx-auto'>
-      <div className='px-4'>
+    <footer className='bg-transparent py-12 relative z-[1] font-manrope w-full'>
+      <div className='px-4 max-w-[1400px] mx-auto'>
         <div className='flex flex-col-reverse md:flex-row justify-between items-start md:items-center gap-8'>
           <div className='mb-6 md:mb-0 max-w-xl'>
             <Link href='/' className='text-white text-2xl font-bold'>

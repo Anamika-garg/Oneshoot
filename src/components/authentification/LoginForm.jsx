@@ -59,7 +59,7 @@ function LoginForm({ switchMode }) {
 
       customToast.success("Signed in successfully!");
       router.refresh(); // Force a router refresh
-      setTimeout(() => router.push("/account"), 1000);
+      setTimeout(() => router.push("/account"), 500);
     } catch (error) {
       customToast.error(
         "An unexpected error occurred during login. Please try again later."

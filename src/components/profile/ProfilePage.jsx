@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserIcon, Shield, Bell, ShoppingCart } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import useNotifications from "@/hooks/useNotifications";
+import { motion } from "framer-motion";
 
 import ProfileOverview from "./ProfileOverview";
 import SecurityTab from "./SecurityTab";
@@ -14,8 +15,99 @@ import NotificationsTab from "./NotificationsTab";
 import OrdersTab from "./OrdersTab";
 import { NotificationProvider } from "@/app/context/NotificationContext";
 import Loader from "../ui/Loader";
+import { FadeInWhenVisible } from "../ui/FadeInWhenVisible";
 
 const supabase = createClient();
+
+const AnimatedTabs = ({ selectedTab, onTabChange, unreadCount = 0 }) => {
+  const tabRefs = useRef(new Map());
+  const [activeTabWidth, setActiveTabWidth] = useState(0);
+  const [activeTabLeft, setActiveTabLeft] = useState(0);
+
+  useEffect(() => {
+    const activeTab = tabRefs.current.get(selectedTab);
+    if (activeTab) {
+      const { offsetWidth, offsetLeft } = activeTab;
+      setActiveTabWidth(offsetWidth);
+      setActiveTabLeft(offsetLeft);
+    }
+  }, [selectedTab]);
+
+  const tabs = [
+    { id: "overview", icon: UserIcon, label: "Profile overview" },
+    { id: "security", icon: Shield, label: "Security" },
+    {
+      id: "notifications",
+      icon: Bell,
+      label: "Notifications",
+      count: unreadCount,
+    },
+    { id: "orders", icon: ShoppingCart, label: "Orders" },
+  ];
+
+  return (
+    <TabsList className='relative grid w-full grid-cols-2 md:grid-cols-4 mb-6 md:mb-8 bg-lightBlack p-0 h-10'>
+      <motion.div
+        className='absolute h-full bg-white rounded-md z-0'
+        animate={{
+          width: activeTabWidth,
+          x: activeTabLeft,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 100,
+          damping: 20,
+          duration: 0.7,
+        }}
+      />
+      {tabs.map(({ id, icon: Icon, label, count }) => (
+        <TabsTrigger
+          key={id}
+          value={id}
+          ref={(el) => tabRefs.current.set(id, el)}
+          onClick={() => onTabChange(id)}
+          className={`
+            relative flex items-center justify-center gap-2 h-10
+           transition-colors duration-200
+            z-10 group data-[state=active]:text-black
+            ${selectedTab === id ? "" : "text-white hover:text-white/80"}
+          `}
+        >
+          <Icon
+            className={`
+            h-5 w-5 
+            transition-colors duration-700 ease-in-out
+            ${selectedTab === id ? "text-black" : "text-white group-hover:text-white/80"}
+          `}
+          />
+          <span
+            className={`
+            hidden md:inline
+            transition-colors duration-700 ease-in-out
+            ${selectedTab === id ? "text-black" : "text-white group-hover:text-white/80"}
+          `}
+          >
+            {label}
+          </span>
+          {typeof count === "number" && count > 0 && id === "notifications" && (
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className={`
+                text-xs rounded-full px-1 py-0.5 min-w-[20px] h-5 
+                flex items-center justify-center
+                ${selectedTab === id ? "bg-black text-white" : "bg-red-500 text-white"}
+                transition-colors duration-700 ease-in-out
+              `}
+            >
+              {count}
+            </motion.span>
+          )}
+        </TabsTrigger>
+      ))}
+    </TabsList>
+  );
+};
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
@@ -23,27 +115,7 @@ const ProfilePage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [selectedTab, setSelectedTab] = useState(
-    searchParams.get("tab") || "overview"
-  );
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        setUser(user);
-      } catch (error) {
-        console.error("Error fetching user:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, []);
-
+  // Update selectedTab when URL changes
   useEffect(() => {
     const tab = searchParams.get("tab");
     if (tab) {
@@ -51,16 +123,51 @@ const ProfilePage = () => {
     }
   }, [searchParams]);
 
+  const [selectedTab, setSelectedTab] = useState(
+    searchParams.get("tab") || "overview"
+  );
+
   const {
     notifications,
     loading: notificationsLoading,
     markAsRead,
+    refetchNotifications,
   } = useNotifications(user?.id);
-  const unreadCount = notifications?.filter((n) => !n.read).length || 0;
+
+  // Calculate unread count
+  const unreadCount = notifications?.filter((n) => !n.read)?.length || 0;
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setLoading(true);
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          setUser(user);
+        } else {
+          router.push("/sign-in");
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [router]);
 
   const handleTabChange = (newTab) => {
     setSelectedTab(newTab);
     router.push(`/account?tab=${newTab}`, undefined, { shallow: true });
+
+    // Refetch notifications when switching to notifications tab
+    if (newTab === "notifications") {
+      refetchNotifications();
+    }
   };
 
   if (loading || notificationsLoading) {
@@ -78,76 +185,49 @@ const ProfilePage = () => {
   return (
     <NotificationProvider>
       <div className='min-h-screen bg-black text-white p-4 md:p-6 mt-24 md:mt-32 relative'>
-        <h1 className='text-3xl md:text-4xl lg:text-5xl font-bold leading-snug mb-4 md:mb-8 font-manrope uppercase text-center bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent'>
-          Profile overview
-        </h1>
+        <FadeInWhenVisible>
+          <h1 className='text-3xl md:text-4xl lg:text-5xl font-bold leading-snug mb-4 md:mb-8 font-manrope uppercase text-center bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent'>
+            Profile overview
+          </h1>
+        </FadeInWhenVisible>
 
         <Tabs
           value={selectedTab}
           onValueChange={handleTabChange}
           className='w-full mt-8 md:mt-16 z-20 relative'
         >
-          <TabsList className='grid w-full grid-cols-2 md:grid-cols-4 mb-6 md:mb-8 bg-lightBlack p-0'>
-            <TabsTrigger
-              value='overview'
-              className='flex items-center justify-center gap-2 '
-              aria-label='Profile overview'
-            >
-              <UserIcon className='h-5 w-5' />
-              <span className='hidden md:inline'>Profile overview</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value='security'
-              className='flex items-center justify-center gap-2 '
-              aria-label='Security settings'
-            >
-              <Shield className='h-5 w-5' />
-              <span className='hidden md:inline'>Security</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value='notifications'
-              className='flex items-center justify-center gap-2 '
-              aria-label='Notification settings'
-            >
-              <Bell className='h-5 w-5' />
-              <div className='flex items-center gap-1'>
-                <span className='hidden md:inline'>Notifications</span>
-                {unreadCount > 0 && (
-                  <span className='bg-red-500 text-white text-xs rounded-full px-1 py-0.5 w-5 h-5'>
-                    {unreadCount}
-                  </span>
-                )}
-              </div>
-            </TabsTrigger>
-            <TabsTrigger
-              value='orders'
-              className='flex items-center justify-center gap-2 '
-              aria-label='Order history'
-            >
-              <ShoppingCart className='h-5 w-5' />
-              <span className='hidden md:inline'>Orders</span>
-            </TabsTrigger>
-          </TabsList>
+          <AnimatedTabs
+            selectedTab={selectedTab}
+            onTabChange={handleTabChange}
+            unreadCount={unreadCount}
+          />
 
-          <TabsContent value='overview'>
-            <ProfileOverview user={user} />
-          </TabsContent>
+          <motion.div
+            initial={false}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.7 }}
+          >
+            <TabsContent value='overview'>
+              <ProfileOverview user={user} />
+            </TabsContent>
 
-          <TabsContent value='security'>
-            <SecurityTab currentEmail={user.email} />
-          </TabsContent>
+            <TabsContent value='security'>
+              <SecurityTab currentEmail={user.email} />
+            </TabsContent>
 
-          <TabsContent value='notifications'>
-            <NotificationsTab
-              user={user}
-              notifications={notifications}
-              markAsRead={markAsRead}
-            />
-          </TabsContent>
+            <TabsContent value='notifications'>
+              <NotificationsTab
+                user={user}
+                notifications={notifications || []}
+                markAsRead={markAsRead}
+                onRefresh={refetchNotifications}
+              />
+            </TabsContent>
 
-          <TabsContent value='orders'>
-            <OrdersTab user={user} />
-          </TabsContent>
+            <TabsContent value='orders'>
+              <OrdersTab user={user} />
+            </TabsContent>
+          </motion.div>
         </Tabs>
         <div className='absolute top-1/2 md:top-10 -right-20 md:-right-40 h-80 md:h-[420px] w-80 md:w-[420px] rounded-full blur-[220px] md:blur-[320px] pointer-events-none bg-orange z-0'></div>
       </div>

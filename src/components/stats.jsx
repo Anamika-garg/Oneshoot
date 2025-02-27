@@ -1,7 +1,7 @@
 "use client";
+import { motion } from "framer-motion";
+import { FadeInWhenVisible } from "./ui/FadeInWhenVisible";
 
-import { useRef } from "react";
-import { motion, useInView } from "framer-motion";
 
 const svgPaths = [
   `<path d='M40.8544 32.5885C40.4012 33.0469 40.193 33.7099 40.2962 34.3601L41.8518 43.3462C41.983 44.1079 41.675 44.8786 41.0644 45.3188C40.4659 45.7754 39.6698 45.8302 39.0171 45.4649L31.2674 41.2458C30.9979 41.0961 30.6987 41.0157 30.3925 41.0066H29.9183C29.7538 41.0321 29.5929 41.0869 29.4459 41.1709L21.6944 45.4101C21.3112 45.611 20.8773 45.6823 20.4521 45.611C19.4162 45.4065 18.725 44.3764 18.8948 43.2896L20.4521 34.3035C20.5553 33.6478 20.3471 32.9812 19.8939 32.5154L13.5755 26.1229C13.047 25.5877 12.8633 24.7841 13.1048 24.059C13.3392 23.3357 13.9377 22.8079 14.6603 22.6892L23.3567 21.3724C24.0181 21.3011 24.599 20.881 24.8965 20.2601L28.7285 12.0593C28.8195 11.8767 28.9367 11.7087 29.0784 11.5662L29.2359 11.4383C29.3182 11.3434 29.4126 11.2648 29.5176 11.2009L29.7084 11.1279L30.0058 11H30.7425C31.4004 11.0712 31.9796 11.4822 32.2823 12.0959L36.165 20.2601C36.445 20.8573 36.9892 21.2719 37.6173 21.3724L46.3137 22.6892C47.0486 22.7988 47.6628 23.3284 47.906 24.059C48.1352 24.7914 47.9375 25.5951 47.3985 26.1229L40.8544 32.5885Z' fill='#E39530'/><rect width='60' height='60' rx='30' fill='#FFB528' opacity='0.15'/>`,
@@ -22,106 +22,74 @@ const stats = [
 ];
 
 export function Stats() {
-  const sectionRef = useRef(null);
-  const isInView = useInView(sectionRef, { once: true, amount: 0.1 });
-
-  const staggerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: (i) => ({
-      opacity: 1,
-      y: 0,
-      transition: { delay: i * 0.1, duration: 0.5 },
-    }),
-  };
-
   return (
-    <motion.section
-      ref={sectionRef}
-      initial={{ opacity: 0 }}
-      animate={isInView ? { opacity: 1 } : {}}
-      transition={{ duration: 0.5 }}
-      className='py-20 relative overflow-x-clip'
-    >
+    <section className='py-20 relative overflow-x-clip'>
       <div className='container px-4 mx-auto'>
-        <motion.h2
-          variants={staggerVariants}
-          initial='hidden'
-          animate={isInView ? "visible" : "hidden"}
-          custom={0}
-          className='text-2xl md:text-xl font-manrope uppercase font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent mb-4 md:mb-2'
-        >
-          Why Go with Us
-        </motion.h2>
+        <FadeInWhenVisible>
+          <h2 className='text-2xl md:text-xl font-manrope uppercase font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent mb-4 md:mb-2'>
+            Why Go with Us
+          </h2>
+        </FadeInWhenVisible>
+
         <div className='flex flex-col md:flex-row justify-between items-start md:items-center'>
-          <motion.div
-            variants={staggerVariants}
-            initial='hidden'
-            animate={isInView ? "visible" : "hidden"}
-            custom={1}
-            className='flex flex-col gap-8 md:gap-16 max-w-2xl w-full py-10'
-          >
-            <p className='text-2xl md:text-3xl font-bold text-white tracking-wider font-manrope'>
-              At OneShot, we are dedicated to delivering an exceptional customer
-              experience, ensuring maximum value for your investment.
-            </p>
-            <p className='text-base font-light text-white tracking-wider font-manrope'>
-              With a focus on excellence, we provide only high-quality content
-              and fast, reliable support as your trusted partner.
-            </p>
-          </motion.div>
+          <div className='flex flex-col gap-8 md:gap-16 max-w-2xl w-full py-10'>
+            <FadeInWhenVisible delay={0.1}>
+              <p className='text-2xl md:text-3xl font-bold text-white tracking-wider font-manrope'>
+                At OneShot, we are dedicated to delivering an exceptional
+                customer experience, ensuring maximum value for your investment.
+              </p>
+            </FadeInWhenVisible>
+
+            <FadeInWhenVisible delay={0.2}>
+              <p className='text-base font-light text-white tracking-wider font-manrope'>
+                With a focus on excellence, we provide only high-quality content
+                and fast, reliable support as your trusted partner.
+              </p>
+            </FadeInWhenVisible>
+          </div>
+
           <div className='flex flex-col gap-10 md:gap-14 max-w-2xl w-full items-center md:items-end mt-8 md:mt-0 relative z-10'>
             {features.map((text, index) => (
-              <motion.div
-                key={index}
-                variants={staggerVariants}
-                initial='hidden'
-                animate={isInView ? "visible" : "hidden"}
-                custom={index + 2}
-                className='flex items-center max-w-2xl gap-4 md:gap-5'
-              >
-                <svg
-                  width='60'
-                  height='60'
-                  viewBox='0 0 60 60'
-                  fill='none'
-                  xmlns='http://www.w3.org/2000/svg'
-                  className='flex-shrink-0'
-                  dangerouslySetInnerHTML={{ __html: svgPaths[index] }}
-                />
-                <p className='text-lg md:text-xl font-medium text-white tracking-wider font-manrope w-56'>
-                  {text}
-                </p>
-              </motion.div>
+              <FadeInWhenVisible key={index} delay={0.3 + index * 0.1}>
+                <div className='flex items-center max-w-2xl gap-4 md:gap-5'>
+                  <svg
+                    width='60'
+                    height='60'
+                    viewBox='0 0 60 60'
+                    fill='none'
+                    xmlns='http://www.w3.org/2000/svg'
+                    className='flex-shrink-0'
+                    dangerouslySetInnerHTML={{ __html: svgPaths[index] }}
+                  />
+                  <p className='text-lg md:text-xl font-medium text-white tracking-wider font-manrope w-56'>
+                    {text}
+                  </p>
+                </div>
+              </FadeInWhenVisible>
             ))}
           </div>
         </div>
-        <motion.div
-          variants={staggerVariants}
-          initial='hidden'
-          animate={isInView ? "visible" : "hidden"}
-          custom={5}
-          className='flex flex-col md:flex-row items-center gap-y-8 md:gap-x-24 mx-auto justify-center mt-16 md:mt-24 '
-        >
+
+        <div className='flex flex-col md:flex-row items-center gap-y-8 md:gap-x-24 mx-auto justify-center mt-16 md:mt-24'>
           {stats.map(({ value, label }, index) => (
-            <motion.div
-              key={index}
-              whileHover={{ scale: 1.05 }}
-              className='font-inter text-3xl md:text-4xl font-extrabold text-white tracking-wider flex items-center gap-3 md:gap-4 relative z-10'
-            >
-              {value}
-              <span className='text-base md:text-xl font-manrope uppercase font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent pt-1'>
-                {label}
-              </span>
-            </motion.div>
+            <FadeInWhenVisible key={index} delay={0.6 + index * 0.1}>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className='font-inter text-3xl md:text-4xl font-extrabold text-white tracking-wider flex items-center gap-3 md:gap-4 relative z-10'
+              >
+                {value}
+                <span className='text-base md:text-xl font-manrope uppercase font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent pt-1'>
+                  {label}
+                </span>
+              </motion.div>
+            </FadeInWhenVisible>
           ))}
-        </motion.div>
+        </div>
       </div>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={isInView ? { opacity: 1 } : {}}
-        transition={{ duration: 1 }}
-        className='absolute bottom-1/2 md:bottom-20 -right-20 md:-right-40 h-80 md:h-[320px] w-80 md:w-[320px] rounded-full blur-[220px] md:blur-[200px] pointer-events-none bg-orange z-0'
-      />
-    </motion.section>
+
+      <FadeInWhenVisible delay={0.8}>
+        <div className='absolute bottom-1/2 md:bottom-20 -right-20 md:-right-40 h-80 md:h-[320px] w-80 md:w-[320px] rounded-full blur-[220px] md:blur-[200px] pointer-events-none bg-orange z-0' />
+      </FadeInWhenVisible>
+    </section>
   );
 }

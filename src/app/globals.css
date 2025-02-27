@@ -12,3 +12,24 @@
     --radius: 0.5rem;
   }
 }
+/* Add this to your global CSS file */
+.TabsTrigger {
+  position: relative;
+  transition: all 0.7s ease;
+}
+
+.TabsTrigger:hover {
+  background-color: transparent;
+}
+
+.TabsTrigger[data-state="active"] {
+  transition: all 0.7s ease;
+}
+
+.TabsTrigger[data-state="inactive"] {
+  transition: all 0.7s ease;
+}
+
+.TabsContent {
+  transition: opacity 0.7s ease;
+}

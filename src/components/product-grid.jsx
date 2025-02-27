@@ -1,20 +1,18 @@
 "use client";
-
-import { useState, useRef } from "react";
+import { useState } from "react";
+import { hover, motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { getCategories, getProducts } from "@/lib/sanity";
-import { ProductModal } from "./products/ProductsModal";
-import { ProductCard } from "./products/ProductCard";
-import AnimatedText from "./ui/AnimatedText";
-import { Button } from "./ui/button";
 import { useProductContext } from "@/app/context/ProductContext";
+import { FadeInWhenVisible } from "./ui/FadeInWhenVisible";
+import { ProductCard } from "./products/ProductCard";
+import { Button } from "./ui/button";
 
 export function ProductGrid() {
   const { selectedCategory, setSelectedCategory } = useProductContext();
+  const [hoverCategory, setHoverCategory] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const sectionRef = useRef(null);
   const router = useRouter();
 
   const { data: categories = [] } = useQuery({
@@ -33,6 +31,7 @@ export function ProductGrid() {
       : products.filter((product) => product.category === selectedCategory);
 
   const displayedProducts = filteredProducts.slice(0, 8);
+  const activeCategoryforUnderline = hoverCategory || selectedCategory;
 
   const getCategoryClass = (categoryName) =>
     `px-4 py-2 text-lg md:text-xl relative transition-all duration-300 ${
@@ -58,110 +57,79 @@ export function ProductGrid() {
   };
 
   return (
-    <motion.section
-      ref={sectionRef}
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      className='py-20 bg-black min-h-screen'
-    >
+    <section className='py-20 bg-black min-h-screen overflow-x-clip'>
       <div className='container px-4 mx-auto'>
-        <AnimatedText>
+        {/* Title Section */}
+        <FadeInWhenVisible>
           <h2 className='text-xl font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent mb-2 text-center'>
             OUR OFFERS
           </h2>
-        </AnimatedText>
-        <AnimatedText>
+        </FadeInWhenVisible>
+
+        <FadeInWhenVisible delay={0.1}>
           <p className='text-4xl font-bold text-white tracking-wider text-center mb-12'>
             EXPLORE PRODUCTS
           </p>
-        </AnimatedText>
+        </FadeInWhenVisible>
 
         {/* Categories */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className='flex flex-wrap justify-center gap-4 mb-12 max-w-4xl mx-auto'
-        >
-          <button
-            key='All'
-            onClick={() => handleCategoryClick("All")}
-            className={getCategoryClass("All")}
-            aria-label='Show all categories'
-          >
-            All
-            <motion.span
-              className='absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart'
-              initial={{ width: "0%" }}
-              animate={{ width: selectedCategory === "All" ? "100%" : "0%" }}
-              transition={{ duration: 0.3 }}
-            />
-          </button>
-          {categories.map((category) => (
-            <button
-              key={category._id}
-              onClick={() => handleCategoryClick(category.name)}
-              className={getCategoryClass(category.name)}
-              aria-label={`Filter by ${category.name} category`}
-            >
-              {category.name}
-              <motion.span
-                className='absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart'
-                initial={{ width: "0%" }}
-                animate={{
-                  width: selectedCategory === category.name ? "100%" : "0%",
-                }}
-                transition={{ duration: 0.3 }}
-              />
-            </button>
-          ))}
-        </motion.div>
+        <FadeInWhenVisible delay={0.2}>
+          <div className='flex flex-wrap justify-center gap-4 mb-12 max-w-4xl mx-auto'>
+            {["All", ...categories.map((c) => c.name)].map((category) => (
+              <button
+                key={category}
+                onClick={() => handleCategoryClick(category)}
+                className={getCategoryClass(category)}
+                onMouseEnter={() => setHoverCategory(category)}
+                onMouseLeave={() => setHoverCategory(null)}
+              >
+                <div className={`relative py-2 ${getCategoryClass(category)} `}>
+                  {category}
+                  {selectedCategory === category && (
+                    <motion.div
+                      layoutId='active'
+                      className='absolute bottom-0 left-0 right-0 w-full h-0.5  bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart'
+                    />
+                  )}
+                  {activeCategoryforUnderline === category && (
+                    <motion.div
+                      layoutId='hover'
+                      className='absolute bottom-0 left-0 right-0 w-full h-0.5 bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart'
+                    />
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        </FadeInWhenVisible>
 
         {/* Products Grid */}
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
           {displayedProducts.map((product, index) => (
-            <motion.div
-              key={product._id}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-            >
-              <ProductCard
-                product={product}
-                onClick={handleProductClick}
-                index={index}
-                total={displayedProducts.length}
-              />
-            </motion.div>
+            <FadeInWhenVisible key={product._id} delay={0.1 * index}>
+              <ProductCard product={product} onClick={handleProductClick} />
+            </FadeInWhenVisible>
           ))}
         </div>
 
         {/* Load More Button */}
         {filteredProducts.length > 8 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className='text-center mt-8'
-          >
-            <Button
-              onClick={handleLoadMore}
-              className='px-6 py-3 bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart text-black rounded-md font-semibold hover:opacity-70 transition-opacity'
-            >
-              Load More
-            </Button>
-          </motion.div>
+          <FadeInWhenVisible delay={0.3}>
+            <div className='text-center mt-8'>
+              <Button
+                onClick={handleLoadMore}
+                className='px-6 py-3 bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart text-black rounded-md font-semibold hover:opacity-70 transition-opacity'
+              >
+                Load More
+              </Button>
+            </div>
+          </FadeInWhenVisible>
         )}
 
         {selectedProduct && (
           <ProductModal product={selectedProduct} onClose={handleCloseModal} />
         )}
       </div>
-    </motion.section>
+    </section>
   );
 }

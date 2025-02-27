@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus } from "lucide-react";
+import { FadeInWhenVisible } from "./ui/FadeInWhenVisible";
 
 const faqData = [
   {
@@ -74,17 +75,20 @@ export default function FAQPage() {
   return (
     <section className='relative  bg-black px-4 py-16 mb-14'>
       <div className='container relative z-20 mx-auto'>
-        <h1 className='mb-12 text-center text-[2.5rem] md:text-5xl font-bold text-white'>
-          FAQ
-        </h1>
+        <FadeInWhenVisible>
+          <h1 className='mb-12 text-center text-[2.5rem] md:text-5xl font-bold text-white'>
+            FAQ
+          </h1>
+        </FadeInWhenVisible>
         <div className='space-y-1'>
           {faqData.map((item, index) => (
-            <AccordionItem
-              key={index}
-              item={item}
-              isOpen={openIndex === index}
-              onToggle={() => handleToggle(index)}
-            />
+            <FadeInWhenVisible key={index} delay={index * 0.1}>
+              <AccordionItem
+                item={item}
+                isOpen={openIndex === index}
+                onToggle={() => handleToggle(index)}
+              />
+            </FadeInWhenVisible>
           ))}
         </div>
       </div>
