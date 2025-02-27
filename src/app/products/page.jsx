@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getCategories, getProducts } from "@/lib/sanity";
 import { ProductModal } from "@/components/products/ProductsModal";
@@ -10,6 +10,7 @@ import { useProductContext } from "../context/ProductContext";
 import { Button } from "@/components/ui/button";
 import { FadeInWhenVisible } from "@/components/ui/FadeInWhenVisible";
 import { motion } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -18,6 +19,28 @@ export default function ProductsPage() {
   const [hoverCategory, setHoverCategory] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const searchParams = useSearchParams();
+
+  // More reliable scroll to top implementation
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "auto", // Using "auto" is more reliable than "instant"
+    });
+  }, []);
+
+  // Effect to scroll to top when page or category changes
+  useEffect(() => {
+    scrollToTop();
+  }, [scrollToTop]); // Only scrollToTop needs to be in the dependency array
+
+  // Effect to handle URL params if needed
+  useEffect(() => {
+    const page = searchParams.get("page");
+    if (page) {
+      setCurrentPage(Number(page));
+    }
+  }, [searchParams]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -28,16 +51,6 @@ export default function ProductsPage() {
     queryKey: ["products", selectedCategory],
     queryFn: () => getProducts(selectedCategory),
   });
-
-  // Reliable scroll function
-  const scrollToTop = useCallback(() => {
-    requestAnimationFrame(() => {
-      window.scrollTo({
-        top: 0,
-        behavior: "instant",
-      });
-    });
-  }, []);
 
   const handleProductClick = (product) => {
     setSelectedProduct(product);
@@ -63,18 +76,18 @@ export default function ProductsPage() {
     (category) => {
       setSelectedCategory(category);
       setCurrentPage(1);
-      scrollToTop();
+      // No need to call scrollToTop here as the effect will handle it
     },
-    [setSelectedCategory, scrollToTop]
+    [setSelectedCategory]
   );
 
   const handlePageChange = useCallback(
     (page) => {
-      if (page === currentPage) return; // Prevent unnecessary updates
+      if (page === currentPage) return;
       setCurrentPage(page);
-      scrollToTop();
+      // No need to call scrollToTop here as the effect will handle it
     },
-    [currentPage, scrollToTop]
+    [currentPage]
   );
 
   const getCategoryClass = (categoryName) =>

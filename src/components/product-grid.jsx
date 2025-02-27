@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { hover, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { getCategories, getProducts } from "@/lib/sanity";
@@ -8,6 +8,8 @@ import { useProductContext } from "@/app/context/ProductContext";
 import { FadeInWhenVisible } from "./ui/FadeInWhenVisible";
 import { ProductCard } from "./products/ProductCard";
 import { Button } from "./ui/button";
+import { ProductModal } from "./products/ProductsModal";
+
 
 export function ProductGrid() {
   const { selectedCategory, setSelectedCategory } = useProductContext();
@@ -53,6 +55,7 @@ export function ProductGrid() {
   };
 
   const handleLoadMore = () => {
+    // Navigate to products page - the scroll to top will be handled there
     router.push("/products");
   };
 
