@@ -73,7 +73,7 @@ function Feedback() {
 
   return (
     <section className='font-manrope py-16 relative'>
-      <div className='container px-4 mx-auto'>
+      <div className='max-w-[1400px] px-4 mx-auto'>
         <div className='flex flex-col sm:flex-row items-center gap-8 mb-12'>
           <FadeInWhenVisible>
             <h2 className='text-4xl font-bold text-white tracking-wider uppercase'>

@@ -10,7 +10,6 @@ import { ProductCard } from "./products/ProductCard";
 import { Button } from "./ui/button";
 import { ProductModal } from "./products/ProductsModal";
 
-
 export function ProductGrid() {
   const { selectedCategory, setSelectedCategory } = useProductContext();
   const [hoverCategory, setHoverCategory] = useState(null);
@@ -61,7 +60,7 @@ export function ProductGrid() {
 
   return (
     <section className='py-20 bg-black min-h-screen overflow-x-clip'>
-      <div className='container px-4 mx-auto'>
+      <div className='max-w-[1400px] px-4 mx-auto'>
         {/* Title Section */}
         <FadeInWhenVisible>
           <h2 className='text-xl font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent mb-2 text-center'>

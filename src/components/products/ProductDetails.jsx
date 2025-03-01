@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AddToCartButton } from "@/components/products/AddToCartBtn";
-import { ChevronDown, Check } from "lucide-react";
+import { Check, Plus, Minus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import Image from "next/image";
@@ -18,11 +18,44 @@ export const ProductDetails = ({
   const { user } = useAuth();
 
   const handleQuantityChange = (event) => {
-    setQuantity(Number(event.target.value));
+    const value = event.target.value;
+    // Allow empty input for typing purposes
+    if (value === "") {
+      setQuantity("");
+      return;
+    }
+
+    // Convert to number and validate
+    const numValue = Number.parseInt(value, 10);
+    if (!isNaN(numValue) && numValue > 0) {
+      setQuantity(numValue);
+    }
+  };
+
+  const incrementQuantity = () => {
+    setQuantity((prev) => (typeof prev === "number" ? prev + 1 : 1));
+  };
+
+  const decrementQuantity = () => {
+    setQuantity((prev) =>
+      typeof prev === "number" && prev > 1 ? prev - 1 : 1
+    );
+  };
+
+  // Ensure quantity is a valid number when submitting
+  const getValidQuantity = () => {
+    return typeof quantity === "number" && quantity > 0 ? quantity : 1;
   };
 
   const handleLoginClick = () => {
     router.push("/login?mode=login");
+  };
+
+  // Handle blur to validate empty input
+  const handleBlur = () => {
+    if (quantity === "" || typeof quantity !== "number" || quantity < 1) {
+      setQuantity(1);
+    }
   };
 
   return (
@@ -30,7 +63,7 @@ export const ProductDetails = ({
       {/* Left Column - Product Card */}
       <div className='relative rounded-2xl bg-transparent sm:px-4 p-6'>
         {/* Price Tag */}
-        <div className='absolute top-2  left-1/2 -translate-x-1/2 bg-orange px-4 sm:px-6 py-1 rounded-md shadow-md z-10'>
+        <div className='absolute top-2 left-1/2 -translate-x-1/2 bg-orange px-4 sm:px-6 py-1 rounded-md shadow-md z-10'>
           <span className='text-black font-bold text-lg sm:text-2xl'>
             ${variant.price}
           </span>
@@ -52,23 +85,42 @@ export const ProductDetails = ({
           <div className='space-y-2'>
             <label
               className='text-white text-base sm:text-lg'
-              htmlFor='quantity-select'
+              htmlFor='quantity-input'
             >
               Quantity
             </label>
-            <div className='relative'>
-              <select
-                id='quantity-select'
+
+            {/* Custom quantity input with buttons */}
+            <div className='flex items-center'>
+              <button
+                type='button'
+                onClick={decrementQuantity}
+                className='bg-lightBlack text-white px-3 py-3 rounded-l-2xl border border-zinc-800 hover:bg-zinc-800 focus:outline-none focus:border-orange'
+                aria-label='Decrease quantity'
+              >
+                <Minus className='w-4 h-4' />
+              </button>
+
+              <input
+                id='quantity-input'
+                type='text'
+                inputMode='numeric'
+                pattern='[0-9]*'
                 value={quantity}
                 onChange={handleQuantityChange}
-                className='w-full bg-lightBlack text-white px-4 py-3 rounded-2xl appearance-none border border-zinc-800 focus:outline-none focus:border-orange'
-                aria-label='Select quantity'
+                onBlur={handleBlur}
+                className='w-full bg-lightBlack text-white text-center py-3 border-y border-zinc-800 focus:outline-none focus:border-orange'
+                aria-label='Enter quantity'
+              />
+
+              <button
+                type='button'
+                onClick={incrementQuantity}
+                className='bg-lightBlack text-white px-3 py-3 rounded-r-2xl border border-zinc-800 hover:bg-zinc-800 focus:outline-none focus:border-orange'
+                aria-label='Increase quantity'
               >
-                <option value='1'>1</option>
-                <option value='2'>2</option>
-                <option value='3'>3</option>
-              </select>
-              <ChevronDown className='absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none text-orange' />
+                <Plus className='w-4 h-4' />
+              </button>
             </div>
           </div>
 
@@ -76,7 +128,7 @@ export const ProductDetails = ({
             <AddToCartButton
               product={product}
               variant={variant}
-              quantity={quantity}
+              quantity={getValidQuantity()}
               className='w-full bg-orange text-black py-3 rounded-md font-semibold hover:bg-orange/90 transition-colors'
             />
           ) : (

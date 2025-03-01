@@ -65,7 +65,7 @@ export function ContactForm() {
 
   return (
     <section className='font-manrope relative bg-transparent z-0 overflow-x-clip'>
-      <div className='container px-4 mx-auto pt-10 pb-32 md:pb-20'>
+      <div className='max-w-[1400px] px-4 mx-auto pt-10 pb-32 md:pb-20'>
         <div className='flex flex-col md:flex-row items-start justify-between relative z-50'>
           <FadeInWhenVisible>
             <h2 className='text-[2.5rem] md:text-5xl font-extrabold text-white mb-14 md:mb-8 max-w-md'>

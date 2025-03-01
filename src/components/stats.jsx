@@ -24,7 +24,7 @@ const stats = [
 export function Stats() {
   return (
     <section className='py-20 relative overflow-x-clip'>
-      <div className='container px-4 mx-auto'>
+      <div className='max-w-[1400px] px-4 mx-auto'>
         <FadeInWhenVisible>
           <h2 className='text-2xl md:text-xl font-manrope uppercase font-semibold bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent mb-4 md:mb-2'>
             Why Go with Us
