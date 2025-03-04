@@ -27,6 +27,10 @@ export async function POST(request) {
     if (payload._type === "product") {
       itemData = payload;
       itemType = "product";
+    } else if (payload._type === "productVariant") {
+      // Add handling for productVariant updates
+      itemData = payload;
+      itemType = "productVariant";
     } else if (payload._type === "promoCode") {
       itemData = payload;
       itemType = "promoCode";
@@ -70,6 +74,20 @@ export async function POST(request) {
     let message;
     if (itemType === "product") {
       message = `New product added: ${itemData.name}`;
+    } else if (itemType === "productVariant") {
+      // Handle productVariant notifications
+      const availableLinks = (itemData.downloadLinks || []).filter(
+        (link) => !link.isUsed
+      ).length;
+      if (availableLinks > 0) {
+        message = `New download links available for: ${itemData.name}`;
+      } else {
+        // Don't send notification if no new links are available
+        return NextResponse.json(
+          { message: "No new links to notify about" },
+          { status: 200 }
+        );
+      }
     } else if (itemType === "promoCode") {
       message =
         itemData.notificationText || `New promo code added: ${itemData.code}`;
@@ -82,6 +100,7 @@ export async function POST(request) {
         read: false,
         email: user.email,
         product_id: itemType === "product" ? itemData._id : null,
+        variant_id: itemType === "productVariant" ? itemData._id : null,
         promo_code_id: itemType === "promoCode" ? itemData._id : null,
       };
 

@@ -10,17 +10,11 @@ import {
   Text,
 } from "@react-email/components";
 
-export const OrderConfirmationEmail = ({
-  products = [],
-  orderId = "",
-  expiryTime = "",
-  hasPendingProducts = false,
-}) => (
+export const OrderReadyEmail = ({ products = [], orderId = "" }) => (
   <Html>
     <Head />
-    <Preview>Your order confirmation</Preview>
+    <Preview>Your order is ready for download</Preview>
 
-    {/* Force full background */}
     <Body
       style={{
         backgroundColor: "#0E0E0E",
@@ -47,7 +41,6 @@ export const OrderConfirmationEmail = ({
                 padding: "20px",
               }}
             >
-              {/* Gradient Title */}
               <Heading
                 style={{
                   fontSize: "32px",
@@ -55,10 +48,10 @@ export const OrderConfirmationEmail = ({
                   marginBottom: "24px",
                   textAlign: "center",
                   textTransform: "uppercase",
-                  color: "#FFB800", // Fallback color
+                  color: "#FFB800",
                 }}
               >
-                Order Confirmation
+                Your Order is Ready!
               </Heading>
 
               <Text
@@ -70,28 +63,9 @@ export const OrderConfirmationEmail = ({
                   textAlign: "center",
                 }}
               >
-                Thank you for your purchase! Your order details are below:
+                Good news! Your order #{orderId} is now ready for download.
               </Text>
 
-              {hasPendingProducts && (
-                <Text
-                  style={{
-                    color: "#FFB800",
-                    fontSize: "16px",
-                    lineHeight: "24px",
-                    marginBottom: "20px",
-                    textAlign: "center",
-                    padding: "10px",
-                    border: "1px solid #FFB800",
-                    borderRadius: "8px",
-                  }}
-                >
-                  Some items in your order are currently being prepared. We'll
-                  notify you when they're ready for download.
-                </Text>
-              )}
-
-              {/* Order Info Section */}
               <Section>
                 <table
                   width='100%'
@@ -105,19 +79,6 @@ export const OrderConfirmationEmail = ({
                 >
                   <tr>
                     <td>
-                      <Text
-                        style={{
-                          fontSize: "16px",
-                          fontWeight: "bold",
-                          marginBottom: "16px",
-                          color: "#ffffff",
-                          textAlign: "center",
-                        }}
-                      >
-                        Order #{orderId}
-                      </Text>
-
-                      {/* Products List */}
                       {Array.isArray(products) && products.length > 0 ? (
                         products.map((product, index) => (
                           <div key={index}>
@@ -183,7 +144,7 @@ export const OrderConfirmationEmail = ({
                                                     textAlign: "center",
                                                   }}
                                                 >
-                                                  Download{" "}
+                                                  Download Now{" "}
                                                   {product.downloadLinks
                                                     .length > 1
                                                     ? `#${linkIndex + 1}`
@@ -195,7 +156,40 @@ export const OrderConfirmationEmail = ({
                                         )
                                       )}
                                     </div>
-                                  ) : null}
+                                  ) : (
+                                    <table
+                                      align='center'
+                                      style={{
+                                        textAlign: "center",
+                                        width: "100%",
+                                        maxWidth: "200px",
+                                        margin: "8px auto",
+                                        borderRadius: "8px",
+                                        backgroundColor: "#FFB800",
+                                      }}
+                                    >
+                                      <tr>
+                                        <td
+                                          align='center'
+                                          style={{ padding: "8px 16px" }}
+                                        >
+                                          <a
+                                            href={product.downloadFilePath}
+                                            style={{
+                                              display: "inline-block",
+                                              fontSize: "14px",
+                                              fontWeight: "600",
+                                              color: "#000000",
+                                              textDecoration: "none",
+                                              textAlign: "center",
+                                            }}
+                                          >
+                                            Download Now
+                                          </a>
+                                        </td>
+                                      </tr>
+                                    </table>
+                                  )}
                                 </td>
                               </tr>
                             </table>
@@ -217,9 +211,7 @@ export const OrderConfirmationEmail = ({
                             textAlign: "center",
                           }}
                         >
-                          Your order has been received.{" "}
-                          {hasPendingProducts &&
-                            "Products will be available for download soon."}
+                          Your order is now ready for download.
                         </Text>
                       )}
                     </td>
@@ -247,21 +239,6 @@ export const OrderConfirmationEmail = ({
                 from your account.
               </Text>
 
-              {expiryTime && (
-                <Text
-                  style={{
-                    color: "rgba(255, 255, 255, 0.7)",
-                    fontSize: "14px",
-                    marginTop: "16px",
-                    textAlign: "center",
-                  }}
-                >
-                  Download links will expire on{" "}
-                  {new Date(expiryTime).toLocaleDateString()} at{" "}
-                  {new Date(expiryTime).toLocaleTimeString()}.
-                </Text>
-              )}
-
               <Hr
                 style={{
                   borderColor: "rgba(255, 255, 255, 0.1)",
@@ -287,4 +264,4 @@ export const OrderConfirmationEmail = ({
   </Html>
 );
 
-export default OrderConfirmationEmail;
+export default OrderReadyEmail;

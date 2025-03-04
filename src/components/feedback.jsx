@@ -10,24 +10,34 @@ import { FadeInWhenVisible } from "./ui/FadeInWhenVisible";
 
 const feedbacks = [
   {
-    text: "Vouch. Bought a personal account, quick and good customer service.",
-    date: "2023-12-22",
+    text: "Thank you for the work, everything was done in the best possible way, I will definitely contact you again",
+    date: "2024-12-22",
     rating: 5,
   },
   {
-    text: "Excellent experience! Highly recommend their services.",
-    date: "2023-12-23",
+    text: "I ordered an Italian bank, everything was done quickly, clearly, I recommend it to everyone",
+    date: "2024-02-11",
     rating: 4,
   },
   {
-    text: "Great support and reliable products.",
-    date: "2023-12-24",
+    text: "Just bought an account from him yesterday. Quick response and account quality is high. A++++ support+quality. Recommended!",
+    date: "2024-10-25",
     rating: 5,
   },
   {
-    text: "Satisfied with the purchase. Will come back for more.",
-    date: "2023-12-25",
+    text: "Обратился, довольно быстро сделал контору. Все ок!",
+    date: "2024-08-14",
     rating: 4,
+  },
+  {
+    text: "Работал с человеком. Все четко, вовремя и по делу. Были сложности с продлением номера, помог в нурочное время. Рекомендую к работе.",
+    date: "2024-07-28",
+    rating: 5,
+  },
+  {
+    text: "все супер, взял готовый еу банк. на все вопросы ответил. помог с настройкой. дружелюбный человек. рекомендую +rep",
+    date: "2024-05-08",
+    rating: 5,
   },
 ];
 

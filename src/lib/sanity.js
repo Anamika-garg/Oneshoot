@@ -5,8 +5,42 @@ export const client = createClient({
   projectId: "bhxza4n3",
   dataset: "production",
   apiVersion: "2023-05-03",
-  useCdn: "production",
+  useCdn: true,
 });
+
+export const writeClient = createClient({
+  projectId: "bhxza4n3",
+  dataset: "production",
+  apiVersion: "2023-05-03",
+  useCdn: false,
+  token: process.env.SANITY_LINK_EDIT_KEY, // Add your write token here
+});
+
+export async function cleanupDownloadLink(variantId, filePath, downloadLinks) {
+  try {
+    const response = await fetch("/api/cleanup-download", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        variantId,
+        filePath,
+        downloadLinks,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Failed to cleanup download link");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error cleaning up download link:", error);
+    throw error;
+  }
+}
 
 const builder = imageUrlBuilder(client);
 
