@@ -88,7 +88,7 @@ export const AddToCartButton = ({
   return (
     <Button
       onClick={handleAddToCart}
-      disabled={isAdding || variant.status === "out-of-stock"}
+      disabled={isAdding}
       className={`bg-orange hover:bg-orange/70 text-black font-semibold w-full ${className}`}
       aria-label={`Add ${quantity} of ${variant.name} to cart`}
     >

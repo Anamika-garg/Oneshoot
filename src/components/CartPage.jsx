@@ -357,17 +357,67 @@ export default function CartPage() {
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
-      // Skip email sending if there are no products (all pending)
+      // Replace this entire block:
       if (purchasedProducts.length === 0 && hasPendingProducts) {
         console.log(
-          "All products are pending, skipping email with download links"
+          "All products are pending, sending email without download links"
         );
+
+        // Create empty products array for the email template
+        const emptyProducts = [];
+
+        // Send email with no products but with hasPendingProducts flag
+        try {
+          console.log(
+            "Sending email for pending order:",
+            JSON.stringify({
+              email: user.email,
+              products: emptyProducts,
+              orderId: orderGroupId,
+              hasPendingProducts: true,
+            })
+          );
+
+          const response = await fetch("/api/send-order-email", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: user.email,
+              products: emptyProducts,
+              orderId: orderGroupId,
+              hasPendingProducts: true,
+            }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Email API error:", errorData);
+            throw new Error(
+              errorData.error || "Failed to send confirmation email"
+            );
+          }
+        } catch (emailError) {
+          console.error("Error sending email:", emailError);
+          toast.error(
+            "Order processed, but we couldn't send a confirmation email. Check your account for order details."
+          );
+        }
+
         clearCart();
         setShowSuccessPopup(true);
         toast.success(
           "Order processed! Your items are pending and will be delivered soon."
         );
         return;
+      }
+
+      // Replace with this (just logging, but continuing with email):
+      if (purchasedProducts.length === 0 && hasPendingProducts) {
+        console.log(
+          "All products are pending, will send email without download links"
+        );
       }
 
       // Send a single confirmation email with all products

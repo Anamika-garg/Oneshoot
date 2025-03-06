@@ -9,7 +9,9 @@ export async function POST(request) {
 
   try {
     // For testing purposes, you can set this to true to bypass verification
-    const bypassVerification = true;
+    const bypassVerification = process.env.NODE_ENV === "development";
+
+    let payload;
 
     if (WEBHOOK_SECRET && !bypassVerification) {
       const signatureHeader = request.headers.get("sanity-webhook-signature");
@@ -28,15 +30,32 @@ export async function POST(request) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
 
-      const payload = JSON.parse(rawBody);
-      console.log("Webhook payload:", payload);
-      return processWebhook(payload, request);
+      payload = JSON.parse(rawBody);
     } else {
       console.log("Bypassing signature verification");
-      const payload = await request.json();
-      console.log("Webhook payload:", payload);
-      return processWebhook(payload, request);
+      payload = await request.json();
     }
+
+    console.log("Webhook payload:", JSON.stringify(payload, null, 2));
+
+    // Forward to debug endpoint first
+    try {
+      const baseUrl =
+        process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+      const debugUrl = `${baseUrl}/api/debug-webhook`;
+
+      await fetch(debugUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      console.log("Forwarded to debug endpoint");
+    } catch (debugError) {
+      console.error("Error forwarding to debug endpoint:", debugError);
+    }
+
+    return processWebhook(payload, request);
   } catch (error) {
     console.error("Error processing Sanity webhook:", error);
     return NextResponse.json(
@@ -76,6 +95,22 @@ function verifyWebhookSignature(signatureHeader, body, secret) {
 }
 
 async function processWebhook(payload, request) {
+  // More robust detection of delete operations
+  const isDeleteOperation =
+    payload.operation === "delete" ||
+    payload._type === "delete" ||
+    payload.transition === "disappear" ||
+    payload.transactionType === "disappear" ||
+    payload.transactionType === "delete" ||
+    payload.eventType === "delete" ||
+    (payload.mutations && payload.mutations.some((m) => m.delete));
+
+  if (isDeleteOperation) {
+    console.log(
+      "Delete operation detected - will still process but notification endpoint will skip sending"
+    );
+  }
+
   // Check for "ids", "documentId", or fallback to "_id"
   let documentIds = [];
   if (payload.ids && Array.isArray(payload.ids) && payload.ids.length > 0) {
@@ -84,6 +119,10 @@ async function processWebhook(payload, request) {
     documentIds = [payload.documentId];
   } else if (payload._id) {
     documentIds = [payload._id];
+  } else if (payload.result && payload.result._id) {
+    documentIds = [payload.result._id];
+  } else if (payload.document && payload.document._id) {
+    documentIds = [payload.document._id];
   } else {
     console.error("Webhook payload missing document identifiers", payload);
     return NextResponse.json({ message: "No document IDs to process" });
@@ -95,35 +134,107 @@ async function processWebhook(payload, request) {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   const results = [];
-  for (const documentId of documentIds) {
-    try {
-      console.log(`Processing document ID: ${documentId}`);
 
-      // Build assign URL using the base URL
-      const assignUrl = `${baseUrl}/api/assign-pending-links`;
-      console.log(`Calling endpoint: ${assignUrl}`);
+  // First, try to process assign-pending-links if needed
+  try {
+    // Only call assign-pending-links for product variants
+    if (
+      payload._type === "productVariant" ||
+      (payload.result && payload.result._type === "productVariant") ||
+      (payload.document && payload.document._type === "productVariant")
+    ) {
+      for (const documentId of documentIds) {
+        try {
+          console.log(`Processing document ID: ${documentId}`);
 
-      const response = await fetch(assignUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ variantId: documentId }),
-      });
+          // Build assign URL using the base URL
+          const assignUrl = `${baseUrl}/api/assign-pending-links`;
+          console.log(`Calling endpoint: ${assignUrl}`);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Error response from assign-pending-links: ${errorText}`);
-        throw new Error(
-          `Failed to assign pending links: ${response.status} ${errorText}`
-        );
+          const response = await fetch(assignUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ variantId: documentId }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(
+              `Error response from assign-pending-links: ${errorText}`
+            );
+            results.push({
+              type: "assign-pending-links",
+              documentId,
+              success: false,
+              error: `Failed: ${response.status} ${errorText}`,
+            });
+          } else {
+            const result = await response.json();
+            console.log(`Result for document ${documentId}:`, result);
+            results.push({
+              type: "assign-pending-links",
+              documentId,
+              success: true,
+              result,
+            });
+          }
+        } catch (error) {
+          console.error(`Error processing document ${documentId}:`, error);
+          results.push({
+            type: "assign-pending-links",
+            documentId,
+            success: false,
+            error: error.message,
+          });
+        }
       }
-
-      const result = await response.json();
-      console.log(`Result for document ${documentId}:`, result);
-      results.push({ documentId, success: true, result });
-    } catch (error) {
-      console.error(`Error processing document ${documentId}:`, error);
-      results.push({ documentId, success: false, error: error.message });
     }
+  } catch (error) {
+    console.error("Error in assign-pending-links processing:", error);
+    results.push({
+      type: "assign-pending-links",
+      success: false,
+      error: error.message,
+    });
+  }
+
+  // Now, trigger the notification webhook
+  try {
+    // Make sure to use the correct path for your notifications endpoint
+    const notificationUrl = `${baseUrl}/api/notification`;
+    console.log(`Calling notification endpoint: ${notificationUrl}`);
+
+    // Forward the original payload to the notification webhook
+    const notificationResponse = await fetch(notificationUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!notificationResponse.ok) {
+      const errorText = await notificationResponse.text();
+      console.error(`Error response from notifications webhook: ${errorText}`);
+      results.push({
+        type: "notification",
+        success: false,
+        error: `Failed to send notifications: ${notificationResponse.status} ${errorText}`,
+      });
+    } else {
+      const notificationResult = await notificationResponse.json();
+      console.log(`Notification result:`, notificationResult);
+      results.push({
+        type: "notification",
+        success: true,
+        result: notificationResult,
+      });
+    }
+  } catch (error) {
+    console.error(`Error sending notifications:`, error);
+    results.push({
+      type: "notification",
+      success: false,
+      error: error.message,
+    });
   }
 
   return NextResponse.json({ message: "Webhook processed", results });

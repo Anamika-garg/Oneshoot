@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Tag, Package } from "lucide-react";
+import { Check, Tag, Package, ShoppingBag, Download } from "lucide-react";
 import Loader from "./ui/Loader";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -35,9 +35,13 @@ const NotificationCenter = ({ userId, notifications, markAsRead }) => {
 
   const getNotificationIcon = (notification) => {
     if (notification.promo_code_id) {
-      return <Tag className={`h-5 w-5`} />;
+      return <Tag className='h-5 w-5' />;
+    } else if (notification.product_id) {
+      return <ShoppingBag className='h-5 w-5' />;
+    } else if (notification.variant_id) {
+      return <Download className='h-5 w-5' />;
     }
-    return <Package className={`h-5 w-5`} />;
+    return <Package className='h-5 w-5' />;
   };
 
   const container = {
