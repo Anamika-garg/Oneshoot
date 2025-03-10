@@ -76,9 +76,22 @@ const Navbar = () => {
   return (
     <nav className='fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-md font-manrope '>
       <div className=' mx-auto flex items-center justify-between p-4 max-w-[1400px]'>
-        {/* Logo */}
-        <Link href='/' className='text-white text-2xl font-bold'>
-          <Image src='/logo.svg' alt='Logo' width={220} height={50} priority />
+        {/* Logo - Fixed for better mobile rendering */}
+        <Link
+          href='/'
+          className='text-white text-2xl font-bold flex items-center'
+        >
+          <div className='relative w-[180px] h-[40px] md:w-[220px] md:h-[50px]'>
+            <Image
+              src='/logo.svg'
+              alt='Logo'
+              fill
+              sizes='(max-width: 768px) 180px, 220px'
+              priority
+              className='object-contain'
+              quality={100}
+            />
+          </div>
         </Link>
 
         {/* Desktop Navigation */}
@@ -199,7 +212,7 @@ const Navbar = () => {
             >
               <ShoppingBasket className='h-6 w-6' />
               {cartCount > 0 && (
-                <span className='absolute -top-2 -right-2 bg-orange text-black text-xs font-bold rounded-full h-3 w-3 flex items-center justify-center'>
+                <span className='absolute -top-2 -right-2 bg-orange text-black text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'>
                   {cartCount}
                 </span>
               )}
@@ -238,10 +251,8 @@ const Navbar = () => {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`block py-2 px-4 ${
-                    pathname === item.href ? "text-orange" : "text-white"
-                  }`}
-                  onClick={closeMobileMenu}
+                  className={`block py-2 px-4 ${pathname === item.href ? "text-orange" : "text-white"}`}
+                  onClick={item.onClick}
                 >
                   {item.label}
                 </Link>

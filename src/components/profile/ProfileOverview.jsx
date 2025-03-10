@@ -101,21 +101,4 @@ const ProfileOverview = ({ user, onAvatarChange }) => {
   );
 };
 
-// ProfileOverview.propTypes = {
-//   user: PropTypes.shape({
-//     id: PropTypes.string.isRequired,
-//     email: PropTypes.string.isRequired,
-//     created_at: PropTypes.string.isRequired,
-//     user_metadata: PropTypes.shape({
-//       avatar_url: PropTypes.string,
-//       full_name: PropTypes.string,
-//     }).isRequired,
-//   }).isRequired,
-//   onAvatarChange: PropTypes.func,
-// };
-
-// ProfileOverview.defaultProps = {
-//   onAvatarChange: () => {},
-// };
-
 export default ProfileOverview;

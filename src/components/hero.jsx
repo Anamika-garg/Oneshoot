@@ -56,7 +56,8 @@ export default function Hero() {
               custom={0}
               className='max-w-80 w-full bg-gradient-to-r from-[rgba(255,255,255,0.23)] to-[#6767671d] px-6 py-2.5 rounded-md mb-8'
             >
-              <span className='text-white font-inter text-base flex items-center gap-2'>
+              <span className='text-white font-inter text-base flex items-center gap-1.5'>
+                10
                 <svg
                   width='27'
                   height='27'
@@ -76,7 +77,6 @@ export default function Hero() {
                     fill='#FFB528'
                   />
                 </svg>
-                20{" "}
                 <span className='text-white/50 flex-1 w-full'>
                   Discount for
                 </span>{" "}
@@ -101,7 +101,7 @@ export default function Hero() {
                 ACCOUNTS SHOP.
               </motion.h1>
 
-              {/* Circular Button */}
+              {/* Circular Button - More responsive sizing with adjusted positioning */}
               <motion.button
                 variants={staggerVariants}
                 initial='hidden'
@@ -109,7 +109,18 @@ export default function Hero() {
                 custom={2}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className='absolute -top-5 right-0 group w-36 h-36 rounded-full hidden sm:block'
+                className='absolute -top-5 
+                  sm:right-16 sm:top-4
+                  md:-right-8 md:-top-10
+                  lg:right-12 lg::-top-5
+                  xl:right-0 
+                  group 
+                  w-20 h-20 
+                  sm:w-22 sm:h-22 
+                  md:w-24 md:h-24 
+                  lg:w-28 lg:h-28 
+                  xl:w-36 xl:h-36 
+                  rounded-full hidden sm:block'
               >
                 <Link
                   className='absolute inset-0 rounded-full bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart p-[2px]'
@@ -117,8 +128,26 @@ export default function Hero() {
                 >
                   <div className='flex items-center justify-center h-full w-full rounded-full bg-black transition-colors group-hover:bg-yellow/10'>
                     <div className='text-center bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent group-hover:bg-none group-hover:text-white'>
-                      <span className='block font-medium'>EXPLORE</span>
-                      <span className='block font-medium'>PRODUCTS</span>
+                      <span
+                        className='block font-medium 
+                        text-[10px] 
+                        sm:text-xs 
+                        md:text-xs 
+                        lg:text-sm 
+                        xl:text-base'
+                      >
+                        EXPLORE
+                      </span>
+                      <span
+                        className='block font-medium 
+                        text-[10px] 
+                        sm:text-xs 
+                        md:text-xs 
+                        lg:text-sm 
+                        xl:text-base'
+                      >
+                        PRODUCTS
+                      </span>
                     </div>
                   </div>
                 </Link>

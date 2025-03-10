@@ -70,6 +70,33 @@ export const getProducts = () =>
   }
 `);
 
+// New function to get all products with the same name across categories
+export const getProductsByName = (productName) =>
+  client.fetch(
+    `
+    {
+      "products": *[_type == "product" && name == $productName] {
+        _id,
+        name,
+        "slug": slug.current,
+        "category": category->name,
+        basePrice,
+        "image": image.asset->url,
+        status,
+        "variants": variants[]-> {
+          _id,
+          name,
+          "slug": slug.current,
+          price,
+          description,
+          status
+        }
+      }
+    }
+    `,
+    { productName }
+  );
+
 export const getProductVariants = (productId) =>
   client.fetch(
     `

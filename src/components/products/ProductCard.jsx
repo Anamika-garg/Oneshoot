@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ShoppingCart } from "lucide-react";
@@ -46,13 +48,17 @@ export function ProductCard({ product, onClick, index, total }) {
             <h4 className='text-2xl text-white uppercase font-extrabold line-clamp-2'>
               {product.name}
             </h4>
-            <div className='flex items-end justify-between'>
-              <div className='space-y-2'>
-                <p className='text-orange'>Category:</p>
-                <p className='text-white text-sm'>{product.category}</p>
+
+            {/* Modified this section to be more responsive */}
+            <div className='flex flex-col sm:flex-row items-start sm:items-end justify-between gap-3 lg:gap-4 xl:gap-2'>
+              <div className='space-y-1 max-w-[60%] sm:max-w-[50%] md:max-w-[45%] lg:max-w-[40%]'>
+                <p className='text-orange text-sm'>Category:</p>
+                <p className='text-white text-sm truncate'>
+                  {product.category}
+                </p>
               </div>
               <Button
-                className='bg-orange hover:bg-orange/70 text-black font-semibold text-sm py-1.5 px-3 whitespace-nowrap'
+                className='bg-orange hover:bg-orange/70 text-black font-semibold text-sm py-1.5 px-3 whitespace-nowrap w-full sm:w-auto flex-shrink-0'
                 aria-label={`Buy ${product.name}`}
               >
                 Buy Now <ShoppingCart className='ml-2 h-4 w-4' />
