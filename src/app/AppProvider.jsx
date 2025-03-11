@@ -9,10 +9,13 @@ import { Toaster } from "@/components/ui/sonner";
 import { CartProvider } from "./context/CartContext";
 import LenisProvider from "@/components/LenisProvider";
 import { ProductProvider } from "./context/ProductContext";
+import PromoBanner from "@/components/profile/components/promo-banner";
+import NavigationObserver from "@/components/profile/components/nav-observer";
 
 export function AppProvider({ children }) {
   const [queryClient] = useState(() => new QueryClient());
   const [supabase] = useState(() => createClient());
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const {
@@ -20,10 +23,22 @@ export function AppProvider({ children }) {
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) {
         queryClient.setQueryData(["user"], session.user); // Immediately set the user
+        setUser(session.user);
       } else if (event === "SIGNED_OUT") {
         queryClient.setQueryData(["user"], null); // Immediately clear the user
+        setUser(null);
       }
     });
+
+    // Get initial session
+    const getInitialSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        setUser(data.session.user);
+      }
+    };
+
+    getInitialSession();
 
     return () => {
       subscription.unsubscribe();
@@ -36,7 +51,12 @@ export function AppProvider({ children }) {
         <AuthProvider>
           <CartProvider>
             <ProductProvider>
-              {children}
+            <NavigationObserver />
+              {/* Place the PromoBanner at the top, before all other content */}
+              {user && <PromoBanner createdAt={user.created_at} />}
+              <div id='main-content' className='min-h-screen'>
+                {children}
+              </div>
               <Toaster />
             </ProductProvider>
           </CartProvider>

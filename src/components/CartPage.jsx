@@ -10,22 +10,28 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { Checkmark } from "./ui/Checkmark";
-import { client as sanityClient, getPromoCode, client } from "@/lib/sanity";
-import { useAuth } from "@/app/context/AuthContext";
+import { client } from "@/lib/sanity";
 import { cleanupDownloadLink } from "@/lib/sanity";
+import PromoCodeInput from "@/app/cart/components/promo-code-input";
 
 // Initialize Supabase client
 const supabase = createClient();
 
 export default function CartPage() {
-  const { cart, removeFromCart, clearCart } = useCart();
-  const { user } = useAuth();
+  const {
+    cart,
+    removeFromCart,
+    clearCart,
+    appliedPromo,
+    removePromoCode,
+    calculateDiscountAmount,
+    recordPromoUsage,
+  } = useCart();
+
   const [email, setEmail] = useState("");
   const [showNOWPayments, setShowNOWPayments] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const router = useRouter();
-  const [promoCode, setPromoCode] = useState("");
-  const [appliedPromo, setAppliedPromo] = useState(null);
   const [showPromoInput, setShowPromoInput] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -42,14 +48,17 @@ export default function CartPage() {
 
   useEffect(() => {
     // Set email from user if available
-    if (user?.email) {
-      setEmail(user.email);
-    }
-  }, [user]);
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user?.email) {
+        setEmail(user.email);
+      }
+    };
 
-  if (!user) {
-    return null;
-  }
+    getUser();
+  }, []);
 
   const handleProceedToPayment = () => {
     if (!email.trim()) {
@@ -57,37 +66,6 @@ export default function CartPage() {
       return;
     }
     setShowNOWPayments(true);
-  };
-
-  const applyPromoCode = async () => {
-    if (!promoCode.trim()) {
-      toast.error("Please enter a promo code");
-      return;
-    }
-
-    try {
-      const promoData = await getPromoCode(promoCode);
-      if (!promoData) {
-        toast.error("Invalid promo code");
-        return;
-      }
-
-      const now = new Date();
-      if (promoData.validFrom && new Date(promoData.validFrom) > now) {
-        toast.error("This promo code is not yet valid");
-        return;
-      }
-      if (promoData.validTo && new Date(promoData.validTo) < now) {
-        toast.error("This promo code has expired");
-        return;
-      }
-
-      setAppliedPromo(promoData);
-      toast.success("Promo code applied successfully");
-    } catch (error) {
-      console.error("Error applying promo code:", error);
-      toast.error("Failed to apply promo code");
-    }
   };
 
   const calculateTotal = () => {
@@ -100,21 +78,6 @@ export default function CartPage() {
       }
     }
     return total.toFixed(2);
-  };
-
-  const calculateDiscountAmount = (itemPrice, itemQuantity) => {
-    if (!appliedPromo) return 0;
-    const itemTotal = itemPrice * itemQuantity;
-    if (appliedPromo.isPercentage) {
-      return (itemTotal * appliedPromo.discount) / 100;
-    } else {
-      // For flat discounts, distribute proportionally across items
-      const cartTotal = cart.reduce(
-        (sum, item) => sum + item.price * item.quantity,
-        0
-      );
-      return (itemTotal / cartTotal) * appliedPromo.discount;
-    }
   };
 
   // Get available download links based on quantity and mark them as used
@@ -260,7 +223,7 @@ export default function CartPage() {
 
       // Process each cart item sequentially to avoid race conditions
       for (const item of cart) {
-        const productStatus = await sanityClient.fetch(
+        const productStatus = await client.fetch(
           `*[_type == "product" && _id == $productId][0] {
           "variantStatus": variants[_id == $variantId].status
         }`,
@@ -357,63 +320,12 @@ export default function CartPage() {
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
-      // Replace this entire block:
-      if (purchasedProducts.length === 0 && hasPendingProducts) {
-        console.log(
-          "All products are pending, sending email without download links"
-        );
-
-        // Create empty products array for the email template
-        const emptyProducts = [];
-
-        // Send email with no products but with hasPendingProducts flag
-        try {
-          console.log(
-            "Sending email for pending order:",
-            JSON.stringify({
-              email: user.email,
-              products: emptyProducts,
-              orderId: orderGroupId,
-              hasPendingProducts: true,
-            })
-          );
-
-          const response = await fetch("/api/send-order-email", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              email: user.email,
-              products: emptyProducts,
-              orderId: orderGroupId,
-              hasPendingProducts: true,
-            }),
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            console.error("Email API error:", errorData);
-            throw new Error(
-              errorData.error || "Failed to send confirmation email"
-            );
-          }
-        } catch (emailError) {
-          console.error("Error sending email:", emailError);
-          toast.error(
-            "Order processed, but we couldn't send a confirmation email. Check your account for order details."
-          );
-        }
-
-        clearCart();
-        setShowSuccessPopup(true);
-        toast.success(
-          "Order processed! Your items are pending and will be delivered soon."
-        );
-        return;
+      // If a promo code was applied, record its usage
+      if (appliedPromo) {
+        await recordPromoUsage(orderGroupId);
       }
 
-      // Replace with this (just logging, but continuing with email):
+      // Replace this entire block:
       if (purchasedProducts.length === 0 && hasPendingProducts) {
         console.log(
           "All products are pending, will send email without download links"
@@ -564,7 +476,7 @@ export default function CartPage() {
                     placeholder='Delivery mail'
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className='bg-transparent text-white border border-white/20 placeholder:text-gray-400 focus:border-yellow focus:ring-0'
+                    className='bg-transparent text-white border border-white/20 placeholder:text-gray-400 focus:border-yellow focus:0'
                     aria-label='Email for delivery'
                   />
                 </div>
@@ -584,28 +496,29 @@ export default function CartPage() {
                         transition={{ duration: 0.3 }}
                         className='overflow-hidden'
                       >
-                        <div className='flex gap-2 mt-2'>
-                          <Input
-                            id='promoCode'
-                            type='text'
-                            placeholder='Enter promo code'
-                            value={promoCode}
-                            onChange={(e) => setPromoCode(e.target.value)}
-                            className='bg-transparent text-white border border-white/20 placeholder:text-gray-400 focus:border-yellow focus:ring-0'
-                            aria-label='Promo code'
-                          />
-                          <button
-                            onClick={applyPromoCode}
-                            className='rounded-lg bg-yellow px-4 py-2 text-black transition-colors hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400'
-                            tabIndex={0}
-                            aria-label='Apply promo code'
-                          >
-                            Apply
-                          </button>
-                        </div>
+                        <PromoCodeInput />
                       </motion.div>
                     )}
                   </AnimatePresence>
+
+                  {appliedPromo && (
+                    <div className='mt-2 p-2 bg-green-500/10 rounded-lg border border-green-500/20'>
+                      <div className='flex justify-between items-center'>
+                        <span className='text-green-500'>
+                          {appliedPromo.code} -{" "}
+                          {appliedPromo.isPercentage
+                            ? `${appliedPromo.discount}% off`
+                            : `$${appliedPromo.discount.toFixed(2)} off`}
+                        </span>
+                        <button
+                          onClick={removePromoCode}
+                          className='text-red-500 hover:text-red-400 text-sm'
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className='flex items-center justify-between pt-4'>
                   <span className='text-xl font-medium text-white'>Total</span>

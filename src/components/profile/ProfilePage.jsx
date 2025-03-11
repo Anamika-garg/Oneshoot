@@ -16,7 +16,6 @@ import OrdersTab from "./OrdersTab";
 import { NotificationProvider } from "@/app/context/NotificationContext";
 import Loader from "../ui/Loader";
 import { FadeInWhenVisible } from "../ui/FadeInWhenVisible";
-import PromoBanner from "./components/promo-banner";
 
 const supabase = createClient();
 
@@ -150,38 +149,6 @@ const ProfilePage = () => {
     fetchProfile();
   }, [router]);
 
-  useEffect(() => {
-    // Function to check if banner is visible and adjust spacing
-    const adjustBannerSpacing = () => {
-      const banner = document.querySelector(".fixed.top-20.z-50"); // Banner selector
-      const spacer = document.getElementById("banner-spacer");
-
-      if (banner && spacer) {
-        // Check if banner is actually visible (not display: none)
-        const isVisible = window.getComputedStyle(banner).display !== "none";
-
-        if (isVisible) {
-          spacer.className = "h-20 md:h-24"; // Add space when banner is visible
-        } else {
-          spacer.className = "h-0"; // No space when banner is hidden
-        }
-      }
-    };
-
-    // Run once on mount
-    adjustBannerSpacing();
-
-    // Set up a small delay to ensure the banner has had time to render/hide
-    const timeoutId = setTimeout(adjustBannerSpacing, 500);
-
-    // Also run when window is resized
-    window.addEventListener("resize", adjustBannerSpacing);
-
-    return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener("resize", adjustBannerSpacing);
-    };
-  }, []);
 
   // Update selectedTab when URL changes
   useEffect(() => {
@@ -215,16 +182,7 @@ const ProfilePage = () => {
 
   return (
     <NotificationProvider>
-      {user && (
-        <>
-          <PromoBanner
-            createdAt={user.created_at || user.user_metadata?.created_at}
-          />
-        </>
-      )}
-      <div id='banner-spacer' className='h-0'>
-        {/* This spacer's height will be controlled by JavaScript */}
-      </div>
+    
       <div className='min-h-screen bg-black text-white p-4 md:p-6 mt-24 md:mt-32 relative'>
         <FadeInWhenVisible>
           <h1 className='text-3xl md:text-4xl lg:text-5xl font-bold leading-snug mb-4 md:mb-8 font-manrope uppercase text-center bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent'>

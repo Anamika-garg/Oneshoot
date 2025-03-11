@@ -100,7 +100,7 @@ export default function ProductsPage() {
   const activeCategoryForUnderline = hoverCategory || selectedCategory;
 
   return (
-    <section className='py-20 bg-black min-h-screen'>
+    <section className='py-24 bg-black min-h-screen'>
       <div className='container px-4 mx-auto pt-12'>
         <FadeInWhenVisible>
           <div className='text-center mb-12'>

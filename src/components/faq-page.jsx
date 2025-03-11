@@ -73,7 +73,7 @@ export default function FAQPage() {
   };
 
   return (
-    <section className='relative  bg-black px-4 py-16 mb-14'>
+    <section className='relative  bg-black px-4 py-20 mb-14'>
       <div className='container relative z-20 mx-auto'>
         <FadeInWhenVisible>
           <h1 className='mb-12 text-center text-[2.5rem] md:text-5xl font-bold text-white'>
