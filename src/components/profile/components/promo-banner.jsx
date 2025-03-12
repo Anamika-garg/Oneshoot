@@ -6,14 +6,20 @@ import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
-const PROMO_KEY = "promoTimer";
-const INITIAL_TIME = { hours: 11, minutes: 59, seconds: 0 };
+// Keys for localStorage
+const PROMO_EXPIRY_KEY = "promoExpiry";
+const PROMO_DISMISSED_KEY = "promoDismissed";
+const PROMO_DURATION_MS = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
 // Create a global CSS variable to track banner height
 const CSS_VAR = "--promo-banner-height";
 
 const PromoBanner = ({ createdAt }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(INITIAL_TIME);
+  const [timeLeft, setTimeLeft] = useState({
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
   const bannerRef = useRef(null);
   const timerRef = useRef(null);
   const pathname = usePathname(); // Track route changes
@@ -21,41 +27,71 @@ const PromoBanner = ({ createdAt }) => {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    // Check if user is new (registered within 7 days)
     const userCreationDate = new Date(createdAt);
     const isNewUser =
       (Date.now() - userCreationDate.getTime()) / (1000 * 60 * 60 * 24) <= 7;
+
     if (!isNewUser) return;
 
+    // Check if user has dismissed the banner
+    const isDismissed = localStorage.getItem(PROMO_DISMISSED_KEY) === "true";
+    if (isDismissed) return;
+
+    // Get or set expiration timestamp
+    let expiryTimestamp = Number.parseInt(
+      localStorage.getItem(PROMO_EXPIRY_KEY),
+      10
+    );
+
+    // If no expiry timestamp exists or it's invalid, set a new one
+    if (!expiryTimestamp || isNaN(expiryTimestamp)) {
+      expiryTimestamp = Date.now() + PROMO_DURATION_MS;
+      localStorage.setItem(PROMO_EXPIRY_KEY, expiryTimestamp.toString());
+    }
+
+    // Check if promo has expired
+    if (Date.now() >= expiryTimestamp) {
+      localStorage.removeItem(PROMO_EXPIRY_KEY);
+      return;
+    }
+
+    // Show banner and start countdown
     setIsVisible(true);
-    const storedTime =
-      JSON.parse(localStorage.getItem(PROMO_KEY)) || INITIAL_TIME;
-    setTimeLeft(storedTime);
 
-    timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (!prev) return INITIAL_TIME;
-        const { hours, minutes, seconds } = prev;
+    // Update timer function
+    const updateTimer = () => {
+      const now = Date.now();
+      const timeRemaining = Math.max(0, expiryTimestamp - now);
 
-        if (hours === 0 && minutes === 0 && seconds === 0) {
-          clearInterval(timerRef.current);
-          setIsVisible(false);
-          localStorage.removeItem(PROMO_KEY);
-          return INITIAL_TIME;
-        }
+      if (timeRemaining <= 0) {
+        clearInterval(timerRef.current);
+        setIsVisible(false);
+        localStorage.removeItem(PROMO_EXPIRY_KEY);
+        return;
+      }
 
-        const updatedTime =
-          seconds > 0
-            ? { ...prev, seconds: seconds - 1 }
-            : minutes > 0
-              ? { hours, minutes: minutes - 1, seconds: 59 }
-              : { hours: hours - 1, minutes: 59, seconds: 59 };
+      // Calculate hours, minutes, seconds
+      const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+      const minutes = Math.floor(
+        (timeRemaining % (1000 * 60 * 60)) / (1000 * 60)
+      );
+      const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
 
-        localStorage.setItem(PROMO_KEY, JSON.stringify(updatedTime));
-        return updatedTime;
-      });
-    }, 1000);
+      setTimeLeft({ hours, minutes, seconds });
+    };
 
-    return () => clearInterval(timerRef.current);
+    // Initial update
+    updateTimer();
+
+    // Set interval for countdown
+    timerRef.current = setInterval(updateTimer, 1000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
   }, [createdAt]);
 
   // Update CSS variable and add class to body when banner is visible
@@ -147,6 +183,12 @@ const PromoBanner = ({ createdAt }) => {
 
   const formatTime = (value) => value.toString().padStart(2, "0");
 
+  const handleDismiss = () => {
+    setIsVisible(false);
+    localStorage.setItem(PROMO_DISMISSED_KEY, "true");
+    localStorage.removeItem(PROMO_EXPIRY_KEY);
+  };
+
   return (
     <Alert
       ref={bannerRef}
@@ -174,10 +216,7 @@ const PromoBanner = ({ createdAt }) => {
             variant='ghost'
             size='sm'
             className='ml-1 text-black hover:bg-white/20 hover:text-white h-7 text-xs'
-            onClick={() => {
-              setIsVisible(false);
-              localStorage.removeItem(PROMO_KEY);
-            }}
+            onClick={handleDismiss}
           >
             Dismiss
           </Button>
