@@ -183,7 +183,7 @@ const ProfilePage = () => {
   return (
     <NotificationProvider>
     
-      <div className='min-h-screen bg-black text-white p-4 md:p-6 mt-24 md:mt-32 relative'>
+      <div className='min-h-screen max-w-[1400px] mx-auto bg-black text-white p-4 md:p-6 mt-24 md:mt-32 relative'>
         <FadeInWhenVisible>
           <h1 className='text-3xl md:text-4xl lg:text-5xl font-bold leading-snug mb-4 md:mb-8 font-manrope uppercase text-center bg-gradient-to-r from-gradientStart via-gradientMid to-gradientStart bg-clip-text text-transparent'>
             Profile overview

@@ -1,20 +1,42 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
 
-const API_KEY = "5JTJZP2-F4Q4RFV-Q02CKEZ-FPV8YAV";
-const API_URL = "https://api.nowpayments.io/v1/invoice";
+// Get API key from environment variable instead of hardcoding
+const API_KEY = process.env.NOWPAYMENTS_API_KEY;
+const API_BASE_URL = "https://api.nowpayments.io/v1";
 
 export async function POST(request) {
   try {
+    // Validate request body
     const { price_amount, order_id, order_description } = await request.json();
 
+    if (!price_amount || !order_id) {
+      return NextResponse.json(
+        {
+          error:
+            "Missing required parameters: price_amount and order_id are required",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Ensure price_amount is a valid number
+    const amount = Number(price_amount);
+    if (isNaN(amount) || amount <= 0) {
+      return NextResponse.json(
+        { error: "Invalid price_amount: must be a positive number" },
+        { status: 400 }
+      );
+    }
+
+    // Create the invoice - removed is_test_invoice parameter
     const response = await axios.post(
-      API_URL,
+      `${API_BASE_URL}/invoice`,
       {
-        price_amount,
+        price_amount: amount,
         price_currency: "usd",
         order_id,
-        order_description,
+        order_description: order_description || `Order ${order_id}`,
         ipn_callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/nowpayments-webhook`,
         success_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-success`,
         cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cart`,
@@ -35,11 +57,23 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error("Error creating invoice:", error);
+
+    // Provide more detailed error information
     if (axios.isAxiosError(error)) {
-      console.error("Axios error details:", error.response?.data);
+      const statusCode = error.response?.status || 500;
+      const errorMessage =
+        error.response?.data?.message || "Failed to create invoice";
+
+      console.error("NOWPayments API error:", {
+        status: statusCode,
+        data: error.response?.data,
+      });
+
+      return NextResponse.json({ error: errorMessage }, { status: statusCode });
     }
+
     return NextResponse.json(
-      { error: "Failed to create invoice" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

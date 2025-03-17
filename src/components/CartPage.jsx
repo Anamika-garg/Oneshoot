@@ -10,8 +10,6 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { Checkmark } from "./ui/Checkmark";
-import { client } from "@/lib/sanity";
-import { cleanupDownloadLink } from "@/lib/sanity";
 import PromoCodeInput from "@/app/cart/components/promo-code-input";
 
 // Initialize Supabase client
@@ -80,316 +78,6 @@ export default function CartPage() {
     return total.toFixed(2);
   };
 
-  // Get available download links based on quantity and mark them as used
-  // Returns an object with available links and a flag indicating if there are enough links
-  const getAvailableDownloadLinks = async (productId, variantId, quantity) => {
-    // Query to get the product and variant details with download links
-    const query = `
-      *[_type == "product" && _id == $productId][0]{
-        name,
-        "variant": *[_type == "productVariant" && _id == $variantId][0]{
-          name,
-          downloadLinks
-        }
-      }
-    `;
-
-    // First, get the current state of the product and variant
-    const productData = await client.fetch(query, {
-      productId,
-      variantId,
-    });
-
-    // Check if product and variant exist
-    if (!productData || !productData.variant) {
-      throw new Error("Product or variant not found");
-    }
-
-    const downloadLinks = productData.variant.downloadLinks || [];
-
-    // Find all unused links
-    const unusedLinks = downloadLinks.filter((link) => !link.isUsed);
-
-    // Check if we have enough links
-    const hasEnoughLinks = unusedLinks.length >= quantity;
-
-    // Get the links that will be used (based on quantity or all available if not enough)
-    const linksToUse = unusedLinks.slice(
-      0,
-      Math.min(quantity, unusedLinks.length)
-    );
-
-    // If we have some links to use, mark them as used
-    if (linksToUse.length > 0) {
-      // Mark the links as used
-      const updatedLinks = [...downloadLinks];
-
-      // Update each link that will be used
-      linksToUse.forEach((linkToUse) => {
-        const linkIndex = updatedLinks.findIndex(
-          (link) => link.filePath === linkToUse.filePath && !link.isUsed
-        );
-
-        if (linkIndex !== -1) {
-          updatedLinks[linkIndex] = {
-            ...updatedLinks[linkIndex],
-            isUsed: true,
-          };
-        }
-      });
-
-      // Update the variant in Sanity via API route
-      try {
-        const response = await fetch("/api/update-download-link", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            variantId,
-            downloadLinks: updatedLinks,
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to update download links");
-        }
-
-        // Wait for the response to ensure the update is complete
-        await response.json();
-
-        // Schedule cleanup for each link (but don't wait for it)
-        try {
-          for (let i = 0; i < linksToUse.length; i++) {
-            const link = linksToUse[i];
-            // Add a small delay between cleanup requests to prevent race conditions
-            setTimeout(() => {
-              cleanupDownloadLink(variantId, link.filePath, updatedLinks).catch(
-                (error) => console.error("Error in cleanup:", error)
-              );
-            }, i * 300); // 300ms delay between each cleanup request
-          }
-        } catch (error) {
-          console.error("Error scheduling cleanup:", error);
-          // Don't throw here - we still want to return the links
-        }
-      } catch (error) {
-        console.error("Error updating download links:", error);
-        throw error;
-      }
-    }
-
-    // Return an array of product details with download links and availability status
-    return {
-      productDetails: linksToUse.map((link) => ({
-        productName: productData.name || "Unknown Product",
-        variantName: productData.variant.name || "Unknown Variant",
-        downloadFilePath: link.filePath || "",
-      })),
-      hasEnoughLinks,
-      availableCount: linksToUse.length,
-      neededCount: quantity,
-    };
-  };
-
-  const handleTestPayment = async () => {
-    if (!email.trim()) {
-      toast.error("Please enter your email address");
-      return;
-    }
-
-    try {
-      setIsProcessing(true);
-
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-      if (userError) throw userError;
-
-      if (!user) {
-        toast.error("Please sign in to complete the purchase");
-        return;
-      }
-
-      // Generate a unique order reference (we'll use this in memory, not in the database)
-      const orderGroupId = `order_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
-
-      // Array to collect all product details for the email
-      const purchasedProducts = [];
-      // Track if any products are pending
-      let hasPendingProducts = false;
-
-      // Process each cart item sequentially to avoid race conditions
-      for (const item of cart) {
-        const productStatus = await client.fetch(
-          `*[_type == "product" && _id == $productId][0] {
-          "variantStatus": variants[_id == $variantId].status
-        }`,
-          { productId: item.id, variantId: item.variantId }
-        );
-
-        const discountAmount = calculateDiscountAmount(
-          item.price,
-          item.quantity
-        );
-
-        // Get available download links based on quantity
-        let productDetailsArray = [];
-        let itemStatus = "paid";
-
-        try {
-          const result = await getAvailableDownloadLinks(
-            item.id,
-            item.variantId,
-            item.quantity
-          );
-
-          productDetailsArray = result.productDetails;
-
-          // If we don't have enough links, mark the order as pending
-          if (!result.hasEnoughLinks) {
-            itemStatus = "pending";
-            hasPendingProducts = true;
-
-            console.log(
-              `Product ${item.name} has insufficient links. Available: ${result.availableCount}, Needed: ${result.neededCount}`
-            );
-          }
-
-          // Add all product details to the array of purchased products
-          purchasedProducts.push(...productDetailsArray);
-        } catch (error) {
-          console.error("Error getting download links:", error);
-          // If there's an error getting links, still create the order but mark it as pending
-          itemStatus = "pending";
-          hasPendingProducts = true;
-        }
-
-        // Create order record with orderGroupId in metadata
-        const { data: orderData, error: orderError } = await supabase
-          .from("orders")
-          .insert({
-            user_id: user.id,
-            product_id: item.id,
-            variant_id: item.variantId,
-            status: itemStatus,
-            amount: item.price * item.quantity,
-            promo_code: appliedPromo ? appliedPromo.code : null,
-            discount_amount: discountAmount,
-            metadata: JSON.stringify({
-              available: productDetailsArray.length,
-              needed: item.quantity,
-              orderGroupId: orderGroupId,
-            }),
-            download_links: productDetailsArray, // <-- store the array of assigned download links
-          })
-          .select();
-
-        if (orderError)
-          throw new Error(`Failed to create order: ${orderError.message}`);
-
-        // Create appropriate notification based on status
-        let notificationMessage = "";
-
-        if (itemStatus === "pending") {
-          notificationMessage = `Your order for ${item.name} has been received. We'll notify you when it's ready for download.`;
-        } else {
-          notificationMessage = `Your order for ${item.name} has been successfully processed and is ready for download.`;
-        }
-
-        const { error: notificationError } = await supabase
-          .from("notifications")
-          .insert({
-            user_id: user.id,
-            message: notificationMessage,
-            product_id: item.id,
-            variant_id: item.variantId,
-            order_id: orderData[0].id,
-            read: false,
-            email: user.email,
-          });
-
-        if (notificationError)
-          throw new Error(
-            `Failed to create notification: ${notificationError.message}`
-          );
-
-        // Add a small delay between processing items to avoid race conditions
-        await new Promise((resolve) => setTimeout(resolve, 500));
-      }
-
-      // If a promo code was applied, record its usage
-      if (appliedPromo) {
-        await recordPromoUsage(orderGroupId);
-      }
-
-      // Replace this entire block:
-      if (purchasedProducts.length === 0 && hasPendingProducts) {
-        console.log(
-          "All products are pending, will send email without download links"
-        );
-      }
-
-      // Send a single confirmation email with all products
-      try {
-        console.log(
-          "Sending email with products:",
-          JSON.stringify({
-            email: user.email,
-            products: purchasedProducts,
-            orderId: orderGroupId,
-            hasPendingProducts,
-          })
-        );
-
-        const response = await fetch("/api/send-order-email", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: user.email,
-            products: purchasedProducts,
-            orderId: orderGroupId,
-            hasPendingProducts,
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("Email API error:", errorData);
-          throw new Error(
-            errorData.error || "Failed to send confirmation email"
-          );
-        }
-      } catch (emailError) {
-        console.error("Error sending email:", emailError);
-        // Don't fail the whole process if email fails
-        toast.error(
-          "Order processed, but we couldn't send a confirmation email. Check your account for order details."
-        );
-      }
-
-      clearCart();
-      setShowSuccessPopup(true);
-
-      if (hasPendingProducts) {
-        toast.success(
-          "Order processed! Some items are pending and will be delivered soon."
-        );
-      } else {
-        toast.success("Payment processed successfully!");
-      }
-    } catch (error) {
-      console.error("Error processing test payment:", error);
-      toast.error(`An error occurred: ${error.message}`);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   return (
     <div className='min-h-screen bg-black px-4 py-16 md:py-20 relative'>
       <div className='mx-auto max-w-4xl relative z-20'>
@@ -398,7 +86,7 @@ export default function CartPage() {
           animate='visible'
           className='mb-12 text-center'
         >
-          <h2 className='mb-2 text-lg font-medium text-yellow-500'>BASKET</h2>
+          <h2 className='mb-2 text-lg font-medium text-yellow'>BASKET</h2>
           <p className='text-4xl font-bold tracking-wider text-white'>
             YOUR SHOPPING CART
           </p>
@@ -483,7 +171,7 @@ export default function CartPage() {
                 <div>
                   <button
                     onClick={() => setShowPromoInput(!showPromoInput)}
-                    className='text-orange hover:text-yellow focus:outline-none '
+                    className='text-orange hover:text-yellow focus:outline-none'
                   >
                     Do you have a promo?
                   </button>
@@ -553,16 +241,7 @@ export default function CartPage() {
                     aria-label='Proceed to crypto payment'
                     disabled={isProcessing}
                   >
-                    Pay Now
-                  </button>
-                  <button
-                    onClick={handleTestPayment}
-                    className='rounded-lg bg-green-500 px-6 py-2 text-white transition-colors hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400'
-                    tabIndex={0}
-                    aria-label='Process test payment'
-                    disabled={isProcessing}
-                  >
-                    {isProcessing ? "Processing..." : "Test Payment"}
+                    Pay with Crypto
                   </button>
                 </div>
               </div>
