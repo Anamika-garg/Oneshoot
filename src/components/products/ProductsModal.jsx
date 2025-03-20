@@ -30,12 +30,6 @@ export function ProductModal({ product, onClose }) {
     error: categoriesError,
   } = useQuery({ queryKey: ["categories"], queryFn: getCategories });
 
-  const categoryImageMap =
-    categoriesData?.reduce((acc, cat) => {
-      acc[cat.name] = cat.image;
-      return acc;
-    }, {}) || {};
-
   const handleClose = () => {
     setIsOpen(false);
     setTimeout(onClose, 300);
@@ -49,7 +43,8 @@ export function ProductModal({ product, onClose }) {
           ...variant,
           category: prod.category,
           productSlug: prod.slug,
-          categoryImage: categoryImageMap[prod.category],
+          // Use variant image if available, otherwise use product image
+          variantImage: variant.image || prod.image,
         }))
       : [
           {
@@ -59,7 +54,7 @@ export function ProductModal({ product, onClose }) {
             price: prod.basePrice,
             category: prod.category,
             productSlug: prod.slug,
-            categoryImage: categoryImageMap[prod.category],
+            variantImage: prod.image,
           },
         ]
   );
@@ -99,10 +94,10 @@ export function ProductModal({ product, onClose }) {
                       className='flex flex-col p-4 bg-[#0E0E0E] rounded-lg border-2 border-transparent hover:bg-black/80 hover:border-orange transition-colors duration-200'
                       aria-label={`View details of ${variant.name}`}
                     >
-                      {variant.categoryImage ? (
+                      {variant.variantImage ? (
                         <Image
-                          src={variant.categoryImage || "/placeholder.svg"}
-                          alt={`${variant.category} image`}
+                          src={variant.variantImage || "/placeholder.svg"}
+                          alt={`${variant.name} image`}
                           width={150}
                           height={150}
                           className='rounded-md w-full h-auto object-cover'
