@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AddToCartButton } from "@/components/products/AddToCartBtn";
 import { Check, Plus, Minus } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -14,8 +14,18 @@ export const ProductDetails = ({
   includedFeatures,
 }) => {
   const [quantity, setQuantity] = useState(1);
+  const [imageSrc, setImageSrc] = useState(product.image || "/placeholder.svg");
   const router = useRouter();
   const { user } = useAuth();
+
+  // Add cache-busting for the image
+  useEffect(() => {
+    if (product.image) {
+      // Add a timestamp to bust cache
+      const cacheBuster = `${product.image}${product.image.includes("?") ? "&" : "?"}t=${Date.now()}`;
+      setImageSrc(cacheBuster);
+    }
+  }, [product.image]);
 
   const handleQuantityChange = (event) => {
     const value = event.target.value;
