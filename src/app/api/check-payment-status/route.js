@@ -1,53 +1,39 @@
 import { NextResponse } from "next/server";
-import crypto from "crypto";
+import axios from "axios";
 import { createClient } from "@/utils/supabase/server";
 import { client } from "@/lib/sanity";
 
-// Get environment variables
-const IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET;
+// Get API key from environment variable
+const API_KEY = process.env.NOWPAYMENTS_API_KEY;
+const API_BASE_URL = "https://api.nowpayments.io/v1";
 
 export async function POST(request) {
   try {
-    const rawBody = await request.text();
-    const signature = request.headers.get("x-nowpayments-sig");
+    const { invoiceId } = await request.json();
 
-    // Verify signature if in production
-    if (process.env.NODE_ENV === "production") {
-      if (!signature) {
-        console.error("Missing signature header");
-        return NextResponse.json(
-          { error: "Missing signature" },
-          { status: 401 }
-        );
-      }
-
-      const hash = crypto
-        .createHmac("sha512", IPN_SECRET)
-        .update(rawBody)
-        .digest("hex");
-
-      if (hash !== signature) {
-        console.error("Invalid signature");
-        return NextResponse.json(
-          { error: "Invalid signature" },
-          { status: 401 }
-        );
-      }
+    if (!invoiceId) {
+      return NextResponse.json(
+        { error: "Missing invoice ID" },
+        { status: 400 }
+      );
     }
 
-    const event = JSON.parse(rawBody);
-    console.log("NOWPayments webhook received:", event);
+    // Check payment status with NOWPayments API
+    const response = await axios.get(`${API_BASE_URL}/payment/${invoiceId}`, {
+      headers: {
+        "x-api-key": API_KEY,
+        "Content-Type": "application/json",
+      },
+    });
 
-    // Only process finished payments
-    if (event.payment_status === "finished") {
-      const {
-        order_id,
-        invoice_id,
-        pay_address,
-        price_amount,
-        price_currency,
-      } = event;
+    const paymentData = response.data;
+    console.log("Payment data:", paymentData);
 
+    // If payment is finished, update the order status
+    if (
+      paymentData.payment_status === "finished" ||
+      paymentData.payment_status === "confirmed"
+    ) {
       // Initialize Supabase client
       const supabase = createClient();
 
@@ -56,7 +42,7 @@ export async function POST(request) {
         .from("orders")
         .select("*")
         .filter("status", "eq", "pending_payment")
-        .textSearch("metadata", invoice_id);
+        .textSearch("metadata", invoiceId);
 
       if (ordersError) {
         console.error("Error fetching orders:", ordersError);
@@ -64,14 +50,13 @@ export async function POST(request) {
       }
 
       if (!orders || orders.length === 0) {
-        console.error("No matching orders found for invoice:", invoice_id);
         return NextResponse.json(
-          { error: "No matching orders" },
+          { error: "No matching orders found" },
           { status: 404 }
         );
       }
 
-      // Process each order
+      // Process each order - similar to your webhook handler
       for (const order of orders) {
         const metadata = JSON.parse(order.metadata || "{}");
         const orderGroupId = metadata.orderGroupId;
@@ -167,19 +152,44 @@ export async function POST(request) {
           // Continue processing even if email fails
         }
       }
+
+      return NextResponse.json({
+        success: true,
+        status: "updated",
+        paymentStatus: paymentData.payment_status,
+      });
     }
 
-    return NextResponse.json({ success: true });
+    // If payment is not finished yet
+    return NextResponse.json({
+      success: true,
+      status: "pending",
+      paymentStatus: paymentData.payment_status,
+    });
   } catch (error) {
-    console.error("Webhook error:", error);
+    console.error("Error checking payment status:", error);
+
+    if (axios.isAxiosError(error)) {
+      const statusCode = error.response?.status || 500;
+      const errorMessage =
+        error.response?.data?.message || "Failed to check payment status";
+
+      console.error("NOWPayments API error:", {
+        status: statusCode,
+        data: error.response?.data,
+      });
+
+      return NextResponse.json({ error: errorMessage }, { status: statusCode });
+    }
+
     return NextResponse.json(
-      { error: "Webhook processing failed" },
-      { status: 400 }
+      { error: "Internal server error" },
+      { status: 500 }
     );
   }
 }
 
-// Helper function to get available download links
+// Helper function to get available download links (reused from your webhook handler)
 async function getAvailableDownloadLinks(productId, variantId, quantity) {
   // Query to get the product and variant details with download links
   const query = `

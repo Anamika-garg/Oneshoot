@@ -114,6 +114,13 @@ export default function NOWPaymentsCheckout({ amount, email, onClose }) {
 
       // Clear cart and redirect to NOWPayments invoice page
       clearCart();
+
+      // Store the invoice ID in localStorage for potential recovery
+      localStorage.setItem("lastPaymentId", invoiceId);
+
+      // Set a cookie to validate this payment ID
+      document.cookie = `np_payment_id=${invoiceId}; path=/; max-age=3600;`; // 1 hour expiry
+
       window.location.href = invoiceUrl;
     } catch (error) {
       console.error("Payment error:", error);
