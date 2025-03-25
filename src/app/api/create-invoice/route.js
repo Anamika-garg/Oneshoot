@@ -55,7 +55,7 @@ export async function POST(request) {
         success_url: `${baseUrl}/payment-success`,
         cancel_url: `${baseUrl}/cart`,
         partially_paid_url: `${baseUrl}/payment-partial`,
-        ...(customer_email && { buyer_email: customer_email }), // Add customer email if provided
+        // Removed the buyer_email parameter as it's not supported
       },
       {
         headers: {

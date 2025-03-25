@@ -95,7 +95,6 @@ export default function NOWPaymentsCheckout({ amount, email, onClose }) {
           price_amount: Number.parseFloat(amount),
           order_id: orderId,
           order_description: `Purchase of ${cart.length} item(s)`,
-          customer_email: email, // Add customer email for better tracking
         }),
       });
 
