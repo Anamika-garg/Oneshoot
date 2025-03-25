@@ -8,7 +8,8 @@ const API_BASE_URL = "https://api.nowpayments.io/v1";
 export async function POST(request) {
   try {
     // Validate request body
-    const { price_amount, order_id, order_description } = await request.json();
+    const { price_amount, order_id, order_description, customer_email } =
+      await request.json();
 
     if (!price_amount || !order_id) {
       return NextResponse.json(
@@ -29,7 +30,20 @@ export async function POST(request) {
       );
     }
 
-    // Create the invoice - removed is_test_invoice parameter
+    // Get the base URL from environment variables
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL;
+    if (!baseUrl) {
+      console.error(
+        "Missing NEXT_PUBLIC_APP_URL or NEXT_PUBLIC_SITE_URL environment variable"
+      );
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
+    }
+
+    // Create the invoice
     const response = await axios.post(
       `${API_BASE_URL}/invoice`,
       {
@@ -37,10 +51,11 @@ export async function POST(request) {
         price_currency: "usd",
         order_id,
         order_description: order_description || `Order ${order_id}`,
-        ipn_callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/nowpayments-webhook`,
-        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-success`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cart`,
-        partially_paid_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-partial`,
+        ipn_callback_url: `${baseUrl}/api/nowpayments-webhook`,
+        success_url: `${baseUrl}/payment-success`,
+        cancel_url: `${baseUrl}/cart`,
+        partially_paid_url: `${baseUrl}/payment-partial`,
+        ...(customer_email && { buyer_email: customer_email }), // Add customer email if provided
       },
       {
         headers: {

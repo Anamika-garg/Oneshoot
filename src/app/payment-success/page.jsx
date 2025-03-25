@@ -1,393 +1,185 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+
 import { createClient } from "@/utils/supabase/client";
-import { CheckCircle, Clock, Bell } from "lucide-react";
+import { Checkmark } from "@/components/ui/Checkmark";
 
 const supabase = createClient();
 
 export default function PaymentSuccessPage() {
   const [loading, setLoading] = useState(true);
-  const [order, setOrder] = useState(null);
-  const [error, setError] = useState(null);
-  const [notifications, setNotifications] = useState([]);
-  const [validPayment, setValidPayment] = useState(false);
-  const searchParams = useSearchParams();
+  const [orderStatus, setOrderStatus] = useState("processing");
   const router = useRouter();
-  const paymentId = searchParams.get("NP_id");
 
-  // Function to validate the payment
-  const validatePayment = async () => {
-    try {
-      if (!paymentId) {
-        router.push("/");
-        return false;
-      }
-
-      // Check if this payment ID exists in our database
-      const { data: orders, error: ordersError } = await supabase
-        .from("orders")
-        .select("*")
-        .textSearch("metadata", paymentId);
-
-      if (ordersError) {
-        console.error("Database error:", ordersError);
-        router.push("/");
-        return false;
-      }
-
-      if (!orders || orders.length === 0) {
-        // Check if we have a direct access cookie
-        const directAccess = document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("payment_direct_access="));
-
-        if (directAccess) {
-          // This might be a direct access attempt, but let's check with NOWPayments API
-          // to see if this is a valid payment ID before redirecting
-          try {
-            const response = await fetch("/api/validate-payment", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ paymentId }),
-            });
-
-            if (!response.ok) {
-              router.push("/");
-              return false;
-            }
-
-            const data = await response.json();
-            if (!data.valid) {
-              router.push("/");
-              return false;
-            }
-
-            // If we get here, it's a valid payment ID but we don't have an order yet
-            // Let's allow the user to stay on this page as the webhook might not have processed yet
-            return true;
-          } catch (err) {
-            router.push("/");
-            return false;
-          }
-        }
-      }
-
-      return true;
-    } catch (err) {
-      console.error("Error validating payment:", err);
-      router.push("/");
-      return false;
-    }
-  };
-
-  // Function to check payment status
-  const checkPaymentStatus = async () => {
-    try {
-      if (!paymentId) {
-        setError("No payment reference found");
-        setLoading(false);
-        return;
-      }
-
-      console.log("Checking payment status for:", paymentId);
-
-      // Check if we have any orders with this payment ID
-      const { data: orders, error: ordersError } = await supabase
-        .from("orders")
-        .select("*")
-        .textSearch("metadata", paymentId);
-
-      if (ordersError) {
-        console.error("Database error:", ordersError);
-        setError("Failed to verify payment");
-        setLoading(false);
-        return;
-      }
-
-      console.log("Found orders:", orders?.length || 0);
-
-      if (!orders || orders.length === 0) {
-        // No orders found yet - this could be because the webhook hasn't processed yet
-        setError("Payment is being processed. Please wait a moment.");
-        setLoading(false);
-        return;
-      }
-
-      // Get the first order for display
-      const firstOrder = orders[0];
-      setOrder({
-        id: firstOrder.id,
-        status: firstOrder.status,
-        amount: firstOrder.amount,
-        metadata: JSON.parse(firstOrder.metadata || "{}"),
-        email:
-          firstOrder.email || JSON.parse(firstOrder.metadata || "{}").email,
-        user_id: firstOrder.user_id,
-      });
-
-      // Fetch notifications for this user
-      if (firstOrder.user_id) {
-        const { data: notificationData, error: notificationError } =
-          await supabase
-            .from("notifications")
-            .select("*")
-            .eq("user_id", firstOrder.user_id)
-            .eq("read", false)
-            .order("created_at", { ascending: false });
-
-        if (!notificationError && notificationData) {
-          setNotifications(notificationData);
-        }
-      }
-    } catch (err) {
-      console.error("Error checking payment:", err);
-      setError("An error occurred while verifying your payment");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Validate payment on initial load
   useEffect(() => {
-    const validate = async () => {
-      const isValid = await validatePayment();
-      setValidPayment(isValid);
+    const checkOrderStatus = async () => {
+      try {
+        // Get the order ID from localStorage
+        const orderGroupId = localStorage.getItem("currentOrderId");
 
-      if (isValid) {
-        checkPaymentStatus();
+        if (!orderGroupId) {
+          // If no order ID, redirect to account page after a delay
+          setTimeout(() => router.push("/account"), 3000);
+          return;
+        }
+
+        // Get the current user
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          // If no user, redirect to account page after a delay
+          setTimeout(() => router.push("/account"), 3000);
+          return;
+        }
+
+        // Query orders with this orderGroupId in metadata
+        const { data: orders, error } = await supabase
+          .from("orders")
+          .select("*")
+          .eq("user_id", user.id)
+          .textSearch("metadata", orderGroupId);
+
+        if (error) {
+          console.error("Error fetching orders:", error);
+          setOrderStatus("unknown");
+          return;
+        }
+
+        if (!orders || orders.length === 0) {
+          setOrderStatus("not_found");
+          return;
+        }
+
+        // Determine overall status
+        const allPaid = orders.every((order) => order.status === "paid");
+        const anyPaid = orders.some((order) => order.status === "paid");
+        const anyFailed = orders.some((order) =>
+          ["failed", "expired", "refunded"].includes(order.status)
+        );
+
+        if (allPaid) {
+          setOrderStatus("completed");
+        } else if (anyPaid) {
+          setOrderStatus("partially_completed");
+        } else if (anyFailed) {
+          setOrderStatus("failed");
+        } else {
+          setOrderStatus("processing");
+        }
+      } catch (error) {
+        console.error("Error checking order status:", error);
+        setOrderStatus("error");
+      } finally {
+        setLoading(false);
       }
     };
 
-    validate();
-  }, [paymentId]);
+    checkOrderStatus();
 
-  // Check payment status on load and set up polling
+    // Check status every 5 seconds
+    const interval = setInterval(checkOrderStatus, 5000);
+
+    // Clear interval on unmount
+    return () => clearInterval(interval);
+  }, [router]);
+
+  // Redirect to account page after 30 seconds
   useEffect(() => {
-    if (!validPayment) return;
+    const timer = setTimeout(() => {
+      router.push("/account");
+    }, 30000);
 
-    // Set up a polling mechanism to check status every few seconds
-    // This helps in case the webhook hasn't processed yet
-    const intervalId = setInterval(() => {
-      if (order?.status === "pending_payment") {
-        checkPaymentStatus();
-      } else {
-        clearInterval(intervalId);
-      }
-    }, 5000); // Check every 5 seconds
+    return () => clearTimeout(timer);
+  }, [router]);
 
-    return () => clearInterval(intervalId);
-  }, [paymentId, order?.status, validPayment]);
-
-  // If not a valid payment, show nothing (we'll redirect in useEffect)
-  if (!validPayment) {
-    return (
-      <div className='min-h-screen bg-black flex items-center justify-center p-4'>
-        <div className='inline-block h-8 w-8 animate-spin rounded-full border-4 border-yellow border-r-transparent'></div>
-      </div>
-    );
-  }
-
-  // Function to manually trigger webhook processing
-  const triggerWebhookProcessing = async () => {
-    if (!order?.metadata?.nowpayments_invoice_id) return;
-
-    try {
-      setLoading(true);
-
-      // Call your backend to check the payment status with NOWPayments API
-      const response = await fetch("/api/check-payment-status", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          invoiceId: order.metadata.nowpayments_invoice_id,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to check payment status");
-      }
-
-      // Refresh the order data
-      checkPaymentStatus();
-    } catch (err) {
-      console.error("Error triggering webhook:", err);
-      setError("Failed to update payment status");
-    } finally {
-      setLoading(false);
+  const getStatusMessage = () => {
+    switch (orderStatus) {
+      case "completed":
+        return {
+          title: "Payment Successful!",
+          message:
+            "Your order has been processed successfully. You can download your products from your account page.",
+          color: "rgb(16 185 129)",
+        };
+      case "partially_completed":
+        return {
+          title: "Payment Partially Processed",
+          message:
+            "Some of your items are ready. We're still processing the rest of your order.",
+          color: "rgb(249 115 22)",
+        };
+      case "processing":
+        return {
+          title: "Payment Received",
+          message:
+            "We've received your payment and are processing your order. This may take a few minutes.",
+          color: "rgb(255 221 85)",
+        };
+      case "failed":
+        return {
+          title: "Payment Issue",
+          message:
+            "There was an issue with your payment. Please check your account for details.",
+          color: "rgb(239 68 68)",
+        };
+      case "not_found":
+        return {
+          title: "Order Not Found",
+          message:
+            "We couldn't find your order. Please contact support if you believe this is an error.",
+          color: "rgb(239 68 68)",
+        };
+      default:
+        return {
+          title: "Processing Payment",
+          message:
+            "We're checking the status of your payment. Please wait a moment.",
+          color: "rgb(255 221 85)",
+        };
     }
   };
 
+  const status = getStatusMessage();
+
   return (
     <div className='min-h-screen bg-black flex items-center justify-center p-4'>
-      <div className='max-w-md w-full bg-lightBlack rounded-2xl p-8 relative overflow-hidden'>
-        {/* Background glow effect */}
-        <div className='absolute top-0 -right-20 h-40 w-40 rounded-full blur-[100px] bg-yellow/30 z-0'></div>
-
-        <div className='relative z-10 text-center'>
-          <h2 className='text-2xl font-bold text-white mb-4'>
-            Payment Received
-          </h2>
-
-          {loading ? (
-            <div className='py-8'>
-              <div className='inline-block h-8 w-8 animate-spin rounded-full border-4 border-yellow border-r-transparent'></div>
-              <p className='mt-4 text-gray-300'>Verifying your payment...</p>
+      <div className='bg-lightBlack rounded-2xl p-8 max-w-md w-full text-center'>
+        {loading ? (
+          <div className='animate-pulse flex flex-col items-center'>
+            <div className='w-20 h-20 rounded-full bg-gray-700 mb-4'></div>
+            <div className='h-6 bg-gray-700 rounded w-3/4 mb-4'></div>
+            <div className='h-4 bg-gray-700 rounded w-full mb-2'></div>
+            <div className='h-4 bg-gray-700 rounded w-5/6'></div>
+          </div>
+        ) : (
+          <>
+            <Checkmark
+              size={80}
+              strokeWidth={4}
+              color={status.color}
+              className='mx-auto mb-4'
+            />
+            <h2 className='text-2xl font-bold mb-4 text-white'>
+              {status.title}
+            </h2>
+            <p className='mb-6 text-gray-300'>{status.message}</p>
+            <div className='flex justify-center gap-4'>
+              <button
+                onClick={() => router.push("/account")}
+                className='px-6 py-2 bg-yellow text-black rounded-lg hover:bg-yellow-400 transition-colors'
+              >
+                Go to My Account
+              </button>
             </div>
-          ) : error ? (
-            <div className='py-8'>
-              <Clock className='mx-auto h-16 w-16 text-yellow mb-4' />
-              <p className='text-gray-300 mb-6'>{error}</p>
-              <p className='text-sm text-gray-400 mb-6'>
-                Your payment is being processed. This may take a few minutes.
-                You will receive an email confirmation once your order is ready.
-              </p>
-              <div className='flex flex-col sm:flex-row gap-4 justify-center'>
-                <button
-                  onClick={checkPaymentStatus}
-                  className='px-6 py-2 border border-yellow text-yellow rounded-lg hover:bg-yellow/10 transition-colors'
-                  disabled={loading}
-                >
-                  Check Again
-                </button>
-                <Link
-                  href='/account'
-                  className='px-6 py-2 bg-yellow text-black rounded-lg hover:bg-yellow-400 transition-colors'
-                >
-                  Go to My Account
-                </Link>
-              </div>
-            </div>
-          ) : order ? (
-            <div className='py-8'>
-              {order.status === "pending_payment" ? (
-                <>
-                  <Clock className='mx-auto h-16 w-16 text-yellow mb-4' />
-                  <p className='text-gray-300 mb-4'>
-                    Your payment has been received and is being processed.
-                  </p>
-                  <div className='bg-black/30 rounded-lg p-4 mb-6 text-left'>
-                    <div className='flex justify-between mb-2'>
-                      <span className='text-gray-400'>Order ID:</span>
-                      <span className='text-white'>
-                        {order.metadata.orderGroupId || "N/A"}
-                      </span>
-                    </div>
-                    <div className='flex justify-between mb-2'>
-                      <span className='text-gray-400'>Amount:</span>
-                      <span className='text-white'>${order.amount}</span>
-                    </div>
-                    <div className='flex justify-between'>
-                      <span className='text-gray-400'>Email:</span>
-                      <span className='text-white'>{order.email}</span>
-                    </div>
-                  </div>
-                  <div className='flex flex-col sm:flex-row gap-4 justify-center'>
-                    <button
-                      onClick={triggerWebhookProcessing}
-                      className='px-6 py-2 border border-yellow text-yellow rounded-lg hover:bg-yellow/10 transition-colors'
-                      disabled={loading}
-                    >
-                      Update Status
-                    </button>
-                    <Link
-                      href='/account'
-                      className='px-6 py-2 bg-yellow text-black rounded-lg hover:bg-yellow-400 transition-colors'
-                    >
-                      Go to My Account
-                    </Link>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <CheckCircle className='mx-auto h-16 w-16 text-green-500 mb-4' />
-                  <p className='text-gray-300 mb-4'>
-                    Thank you for your purchase! Your order has been processed
-                    successfully.
-                  </p>
-                  <div className='bg-black/30 rounded-lg p-4 mb-6 text-left'>
-                    <div className='flex justify-between mb-2'>
-                      <span className='text-gray-400'>Order ID:</span>
-                      <span className='text-white'>
-                        {order.metadata.orderGroupId || "N/A"}
-                      </span>
-                    </div>
-                    <div className='flex justify-between mb-2'>
-                      <span className='text-gray-400'>Amount:</span>
-                      <span className='text-white'>${order.amount}</span>
-                    </div>
-                    <div className='flex justify-between'>
-                      <span className='text-gray-400'>Email:</span>
-                      <span className='text-white'>{order.email}</span>
-                    </div>
-                  </div>
-
-                  {notifications.length > 0 && (
-                    <div className='mb-6'>
-                      <div className='flex items-center justify-center mb-2'>
-                        <Bell className='h-5 w-5 text-yellow mr-2' />
-                        <h3 className='text-white font-medium'>
-                          Notifications
-                        </h3>
-                      </div>
-                      <div className='bg-black/30 rounded-lg p-4 text-left max-h-40 overflow-y-auto'>
-                        {notifications.map((notification) => (
-                          <div
-                            key={notification.id}
-                            className='mb-2 pb-2 border-b border-gray-800 last:border-0 last:mb-0 last:pb-0'
-                          >
-                            <p className='text-gray-300 text-sm'>
-                              {notification.message}
-                            </p>
-                            <p className='text-gray-500 text-xs mt-1'>
-                              {new Date(
-                                notification.created_at
-                              ).toLocaleString()}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <Link
-                    href='/account'
-                    className='px-6 py-2 bg-yellow text-black rounded-lg hover:bg-yellow-400 transition-colors'
-                  >
-                    View My Purchases
-                  </Link>
-                </>
-              )}
-            </div>
-          ) : (
-            <div className='py-8'>
-              <p className='text-gray-300 mb-6'>
-                No order information found. If you've just completed a payment,
-                please wait a moment and refresh this page.
-              </p>
-              <div className='flex justify-center gap-4'>
-                <button
-                  onClick={checkPaymentStatus}
-                  className='px-6 py-2 border border-yellow text-yellow rounded-lg hover:bg-yellow/10 transition-colors'
-                >
-                  Check Again
-                </button>
-                <Link
-                  href='/account'
-                  className='px-6 py-2 bg-yellow text-black rounded-lg hover:bg-yellow-400 transition-colors'
-                >
-                  Go to My Account
-                </Link>
-              </div>
-            </div>
-          )}
-        </div>
+            <p className='text-sm text-gray-500 mt-6'>
+              You'll be redirected to your account page automatically...
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

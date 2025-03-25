@@ -59,7 +59,7 @@ export default function NOWPaymentsCheckout({ amount, email, onClose }) {
         await recordPromoUsage(orderGroupId);
       }
 
-      return true;
+      return orderGroupId; // Return the orderGroupId for redirect
     } catch (error) {
       console.error("Error creating order:", error);
       return false;
@@ -95,6 +95,7 @@ export default function NOWPaymentsCheckout({ amount, email, onClose }) {
           price_amount: Number.parseFloat(amount),
           order_id: orderId,
           order_description: `Purchase of ${cart.length} item(s)`,
+          customer_email: email, // Add customer email for better tracking
         }),
       });
 
@@ -106,21 +107,17 @@ export default function NOWPaymentsCheckout({ amount, email, onClose }) {
       const { invoiceUrl, invoiceId } = await response.json();
 
       // Create order records in pending state
-      const orderCreated = await createOrder(invoiceId);
+      const orderGroupId = await createOrder(invoiceId);
 
-      if (!orderCreated) {
+      if (!orderGroupId) {
         throw new Error("Failed to create order records");
       }
 
+      // Store the orderGroupId in localStorage for success page redirect
+      localStorage.setItem("currentOrderId", orderGroupId);
+
       // Clear cart and redirect to NOWPayments invoice page
       clearCart();
-
-      // Store the invoice ID in localStorage for potential recovery
-      localStorage.setItem("lastPaymentId", invoiceId);
-
-      // Set a cookie to validate this payment ID
-      document.cookie = `np_payment_id=${invoiceId}; path=/; max-age=3600;`; // 1 hour expiry
-
       window.location.href = invoiceUrl;
     } catch (error) {
       console.error("Payment error:", error);
