@@ -56,7 +56,6 @@ export async function POST(request) {
     console.log("NOWPayments webhook received:", event);
 
     // Initialize Supabase client properly using your createClient function
-    // which already handles cookies internally
     const supabase = await createClient();
 
     // Process all payment statuses, not just "finished"
@@ -64,6 +63,7 @@ export async function POST(request) {
       payment_id,
       invoice_id,
       payment_status,
+      order_id,
       pay_address,
       price_amount,
       price_currency,
@@ -77,11 +77,11 @@ export async function POST(request) {
       `Processing payment ${payment_id} with status ${payment_status}`
     );
 
-    // Find all orders with this invoice ID in metadata
+    // First, try to find orders by order_id directly
+    // This is more reliable than searching in JSON
     const { data: orders, error: ordersError } = await supabase
       .from("orders")
-      .select("*")
-      .or(`metadata.ilike.%${invoice_id}%,metadata.ilike.%${payment_id}%`);
+      .select("*");
 
     if (ordersError) {
       console.error("Error fetching orders:", ordersError);
@@ -91,28 +91,83 @@ export async function POST(request) {
       );
     }
 
-    // Filter orders to find those with matching invoice_id or payment_id in metadata
+    // Filter orders to find those with matching order_id, invoice_id or payment_id in metadata
     const matchingOrders = orders.filter((order) => {
       try {
         const metadata = JSON.parse(order.metadata || "{}");
-        return (
-          metadata.nowpayments_invoice_id == invoice_id ||
-          metadata.payment_id == payment_id
-        );
+
+        // Check if the order_id from NOWPayments matches the one in metadata
+        if (order_id && metadata.order_id === order_id) {
+          return true;
+        }
+
+        // Check for invoice_id match
+        if (invoice_id && metadata.nowpayments_invoice_id == invoice_id) {
+          return true;
+        }
+
+        // Check for payment_id match
+        if (payment_id && metadata.payment_id == payment_id) {
+          return true;
+        }
+
+        return false;
       } catch (e) {
+        console.error("Error parsing metadata for order:", order.id, e);
         return false;
       }
     });
 
     if (!matchingOrders || matchingOrders.length === 0) {
       console.error(
-        "No matching orders found for invoice/payment:",
-        invoice_id || payment_id
+        "No matching orders found for payment. Order ID:",
+        order_id,
+        "Invoice ID:",
+        invoice_id,
+        "Payment ID:",
+        payment_id
       );
-      return NextResponse.json(
-        { error: "No matching orders", invoice_id, payment_id },
-        { status: 404 }
-      );
+
+      // If no orders found, try to find by order_id in a different format
+      // Sometimes the order_id format might be different between systems
+      if (order_id) {
+        const secondaryMatches = orders.filter((order) => {
+          try {
+            const metadata = JSON.parse(order.metadata || "{}");
+            // Check various possible formats of order_id
+            return (
+              metadata.orderGroupId === order_id ||
+              metadata.orderGroupId === order_id.replace("order_", "") ||
+              (metadata.order_id &&
+                (metadata.order_id === order_id ||
+                  metadata.order_id.includes(order_id) ||
+                  order_id.includes(metadata.order_id)))
+            );
+          } catch (e) {
+            return false;
+          }
+        });
+
+        if (secondaryMatches.length > 0) {
+          console.log(
+            `Found ${secondaryMatches.length} orders with secondary matching`
+          );
+          matchingOrders.push(...secondaryMatches);
+        }
+      }
+
+      // If still no matches, return error
+      if (matchingOrders.length === 0) {
+        return NextResponse.json(
+          {
+            error: "No matching orders",
+            order_id,
+            invoice_id,
+            payment_id,
+          },
+          { status: 404 }
+        );
+      }
     }
 
     console.log(`Found ${matchingOrders.length} orders to update`);
@@ -182,6 +237,7 @@ export async function POST(request) {
             payment_status,
             payment_id,
             invoice_id,
+            order_id,
             payment_updated_at: new Date().toISOString(),
             ...(payment_status === "finished"
               ? {
@@ -370,8 +426,7 @@ async function getAvailableDownloadLinks(productId, variantId, quantity) {
 
       // Update the variant in Sanity
       try {
-        const baseUrl =
-          process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL;
+        const baseUrl = "https://oneshot.sale";
         const response = await fetch(`${baseUrl}/api/update-download-link`, {
           method: "POST",
           headers: {
