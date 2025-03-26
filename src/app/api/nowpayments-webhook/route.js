@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { createClient } from "@/utils/supabase/server";
+
 import { client } from "@/lib/sanity";
+
+import { createServerClient } from "@supabase/ssr";
 
 // Get environment variables
 const IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+// Create a direct Supabase client without cookies
+const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export async function POST(request) {
   try {
@@ -55,26 +62,6 @@ export async function POST(request) {
     const event = JSON.parse(rawBody);
     console.log("NOWPayments webhook received:", event);
 
-    // Initialize Supabase client properly for server context
-    const cookieStore = cookies();
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      {
-        cookies: {
-          get(name) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name, value, options) {
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name, options) {
-            cookieStore.set({ name, value: "", ...options });
-          },
-        },
-      }
-    );
-
     // Process all payment statuses, not just "finished"
     const {
       payment_id,
@@ -96,8 +83,7 @@ export async function POST(request) {
     // Find all orders with this invoice ID in metadata
     const { data: orders, error: ordersError } = await supabase
       .from("orders")
-      .select("*")
-      .or(`metadata.ilike.%${invoice_id}%,metadata.ilike.%${payment_id}%`);
+      .select("*");
 
     if (ordersError) {
       console.error("Error fetching orders:", ordersError);
