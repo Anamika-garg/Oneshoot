@@ -55,8 +55,25 @@ export async function POST(request) {
     const event = JSON.parse(rawBody);
     console.log("NOWPayments webhook received:", event);
 
-    // Initialize Supabase client
-    const supabase = createClient();
+    // Initialize Supabase client properly for server context
+    const cookieStore = cookies();
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          get(name) {
+            return cookieStore.get(name)?.value;
+          },
+          set(name, value, options) {
+            cookieStore.set({ name, value, ...options });
+          },
+          remove(name, options) {
+            cookieStore.set({ name, value: "", ...options });
+          },
+        },
+      }
+    );
 
     // Process all payment statuses, not just "finished"
     const {
@@ -80,29 +97,41 @@ export async function POST(request) {
     const { data: orders, error: ordersError } = await supabase
       .from("orders")
       .select("*")
-      .filter("status", "eq", "pending_payment")
-      .textSearch(
-        "metadata",
-        invoice_id ? invoice_id.toString() : payment_id.toString()
-      );
+      .or(`metadata.ilike.%${invoice_id}%,metadata.ilike.%${payment_id}%`);
 
     if (ordersError) {
       console.error("Error fetching orders:", ordersError);
-      return NextResponse.json({ error: "Database error" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Database error", details: ordersError },
+        { status: 500 }
+      );
     }
 
-    if (!orders || orders.length === 0) {
+    // Filter orders to find those with matching invoice_id or payment_id in metadata
+    const matchingOrders = orders.filter((order) => {
+      try {
+        const metadata = JSON.parse(order.metadata || "{}");
+        return (
+          metadata.nowpayments_invoice_id == invoice_id ||
+          metadata.payment_id == payment_id
+        );
+      } catch (e) {
+        return false;
+      }
+    });
+
+    if (!matchingOrders || matchingOrders.length === 0) {
       console.error(
         "No matching orders found for invoice/payment:",
         invoice_id || payment_id
       );
       return NextResponse.json(
-        { error: "No matching orders" },
+        { error: "No matching orders", invoice_id, payment_id },
         { status: 404 }
       );
     }
 
-    console.log(`Found ${orders.length} orders to update`);
+    console.log(`Found ${matchingOrders.length} orders to update`);
 
     // Map NOWPayments status to your system status
     const statusMap = {
@@ -120,7 +149,7 @@ export async function POST(request) {
     const newStatus = statusMap[payment_status] || "pending_payment";
 
     // Process each order
-    for (const order of orders) {
+    for (const order of matchingOrders) {
       const metadata = JSON.parse(order.metadata || "{}");
       const orderGroupId = metadata.orderGroupId;
       const email = metadata.email;
@@ -131,12 +160,17 @@ export async function POST(request) {
       let productDetailsArray = { productDetails: [], availableCount: 0 };
 
       if (payment_status === "finished") {
-        // Get available download links for this product/variant
-        productDetailsArray = await getAvailableDownloadLinks(
-          order.product_id,
-          order.variant_id,
-          metadata.needed || 1
-        );
+        try {
+          // Get available download links for this product/variant
+          productDetailsArray = await getAvailableDownloadLinks(
+            order.product_id,
+            order.variant_id,
+            metadata.needed || 1
+          );
+        } catch (error) {
+          console.error("Error getting download links:", error);
+          // Continue with empty product details
+        }
       }
 
       // Determine if we have enough links (only relevant for finished payments)
@@ -212,53 +246,56 @@ export async function POST(request) {
       }
 
       if (notificationMessage) {
-        await supabase.from("notifications").insert({
-          user_id: order.user_id,
-          message: notificationMessage,
-          product_id: order.product_id,
-          variant_id: order.variant_id,
-          order_id: order.id,
-          read: false,
-          email: email,
-        });
+        try {
+          await supabase.from("notifications").insert({
+            user_id: order.user_id,
+            message: notificationMessage,
+            product_id: order.product_id,
+            variant_id: order.variant_id,
+            order_id: order.id,
+            read: false,
+            email: email,
+          });
+        } catch (notifError) {
+          console.error("Error creating notification:", notifError);
+        }
       }
     }
 
     // Only send confirmation email if payment is finished
     if (payment_status === "finished") {
       // Get all product details from orders
-      const allProductDetails = orders.flatMap((order) => {
+      const allProductDetails = matchingOrders.flatMap((order) => {
         const downloadLinks = order.download_links || [];
         return downloadLinks;
       });
 
-      const hasPendingProducts = orders.some(
+      const hasPendingProducts = matchingOrders.some(
         (order) => order.status === "pending"
       );
 
       // Get the first order's metadata to extract email and orderGroupId
-      const firstOrderMetadata = JSON.parse(orders[0].metadata || "{}");
+      const firstOrderMetadata = JSON.parse(matchingOrders[0].metadata || "{}");
       const email = firstOrderMetadata.email;
       const orderGroupId = firstOrderMetadata.orderGroupId;
 
       if (email) {
         try {
-          await fetch(
-            `${process.env.NEXT_PUBLIC_APP_URL}/api/send-order-email`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                email: email,
-                products: allProductDetails,
-                orderId: orderGroupId,
-                hasPendingProducts,
-                paymentMethod: "crypto",
-              }),
-            }
-          );
+          const baseUrl =
+            process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL;
+          await fetch(`${baseUrl}/api/send-order-email`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: email,
+              products: allProductDetails,
+              orderId: orderGroupId,
+              hasPendingProducts,
+              paymentMethod: "crypto",
+            }),
+          });
         } catch (emailError) {
           console.error("Error sending email:", emailError);
           // Continue processing even if email fails
@@ -268,12 +305,16 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      message: `Processed ${orders.length} orders with status ${payment_status}`,
+      message: `Processed ${matchingOrders.length} orders with status ${payment_status}`,
     });
   } catch (error) {
     console.error("Webhook error:", error);
     return NextResponse.json(
-      { error: "Webhook processing failed", message: error.message },
+      {
+        error: "Webhook processing failed",
+        message: error.message,
+        stack: error.stack,
+      },
       { status: 400 }
     );
   }
@@ -345,19 +386,18 @@ async function getAvailableDownloadLinks(productId, variantId, quantity) {
 
       // Update the variant in Sanity
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_APP_URL}/api/update-download-link`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              variantId,
-              downloadLinks: updatedLinks,
-            }),
-          }
-        );
+        const baseUrl =
+          process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL;
+        const response = await fetch(`${baseUrl}/api/update-download-link`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            variantId,
+            downloadLinks: updatedLinks,
+          }),
+        });
 
         if (!response.ok) {
           const errorData = await response.json();
