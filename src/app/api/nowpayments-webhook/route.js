@@ -82,7 +82,7 @@ export async function POST(request) {
     const { data: orders, error: ordersError } = await supabase
       .from("orders")
       .select("*")
-      .eq("status", "pending_payment");
+      .or(`status.eq.pending_payment,status.eq.processing,status.eq.partially_paid`);
 
     if (ordersError) {
       console.error("Error fetching orders:", ordersError);
@@ -92,7 +92,18 @@ export async function POST(request) {
       );
     }
 
-    console.log(`Found ${orders?.length || 0} pending orders to check`);
+    console.log(`Found ${orders?.length || 0} orders to check`);
+
+    // Log all order IDs and their metadata for debugging
+    orders?.forEach(order => {
+      console.log(`Order ID: ${order.id}, Status: ${order.status}`);
+      try {
+        const metadata = JSON.parse(order.metadata || "{}");
+        console.log(`Order ${order.id} metadata:`, metadata);
+      } catch (e) {
+        console.error(`Error parsing metadata for order ${order.id}:`, e);
+      }
+    });
 
     // Filter orders to find those with matching order_id, invoice_id or payment_id in metadata
     const matchingOrders = orders.filter((order) => {
@@ -118,6 +129,23 @@ export async function POST(request) {
           return true;
         }
 
+        // Additional check for order_id in different formats
+        if (order_id) {
+          const orderIdMatch = 
+            metadata.orderGroupId === order_id ||
+            metadata.orderGroupId === order_id.replace("order_", "") ||
+            (metadata.order_id && (
+              metadata.order_id === order_id ||
+              metadata.order_id.includes(order_id) ||
+              order_id.includes(metadata.order_id)
+            ));
+          
+          if (orderIdMatch) {
+            console.log(`Found match by alternative order_id format: ${order_id}`);
+            return true;
+          }
+        }
+
         return false;
       } catch (e) {
         console.error("Error parsing metadata for order:", order.id, e);
@@ -135,46 +163,25 @@ export async function POST(request) {
         payment_id
       );
 
-      // If no orders found, try to find by order_id in a different format
-      // Sometimes the order_id format might be different between systems
-      if (order_id) {
-        const secondaryMatches = orders.filter((order) => {
-          try {
-            const metadata = JSON.parse(order.metadata || "{}");
-            // Check various possible formats of order_id
-            return (
-              metadata.orderGroupId === order_id ||
-              metadata.orderGroupId === order_id.replace("order_", "") ||
-              (metadata.order_id &&
-                (metadata.order_id === order_id ||
-                  metadata.order_id.includes(order_id) ||
-                  order_id.includes(metadata.order_id)))
-            );
-          } catch (e) {
-            return false;
-          }
-        });
+      // Log all available orders for debugging
+      console.log("Available orders:", orders?.map(order => ({
+        id: order.id,
+        status: order.status,
+        metadata: order.metadata
+      })));
 
-        if (secondaryMatches.length > 0) {
-          console.log(
-            `Found ${secondaryMatches.length} orders with secondary matching`
-          );
-          matchingOrders.push(...secondaryMatches);
-        }
-      }
-
-      // If still no matches, return error
-      if (matchingOrders.length === 0) {
-        return NextResponse.json(
-          {
-            error: "No matching orders",
+      return NextResponse.json(
+        {
+          error: "No matching orders found",
+          details: {
             order_id,
             invoice_id,
             payment_id,
-          },
-          { status: 404 }
-        );
-      }
+            total_orders_checked: orders?.length || 0
+          }
+        },
+        { status: 404 }
+      );
     }
 
     console.log(`Found ${matchingOrders.length} orders to update`);
