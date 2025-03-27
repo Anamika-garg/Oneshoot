@@ -81,7 +81,8 @@ export async function POST(request) {
     // This is more reliable than searching in JSON
     const { data: orders, error: ordersError } = await supabase
       .from("orders")
-      .select("*");
+      .select("*")
+      .eq("status", "pending_payment");
 
     if (ordersError) {
       console.error("Error fetching orders:", ordersError);
@@ -91,23 +92,29 @@ export async function POST(request) {
       );
     }
 
+    console.log(`Found ${orders?.length || 0} pending orders to check`);
+
     // Filter orders to find those with matching order_id, invoice_id or payment_id in metadata
     const matchingOrders = orders.filter((order) => {
       try {
         const metadata = JSON.parse(order.metadata || "{}");
+        console.log(`Checking order ${order.id} metadata:`, metadata);
 
         // Check if the order_id from NOWPayments matches the one in metadata
         if (order_id && metadata.order_id === order_id) {
+          console.log(`Found match by order_id: ${order_id}`);
           return true;
         }
 
         // Check for invoice_id match
         if (invoice_id && metadata.nowpayments_invoice_id == invoice_id) {
+          console.log(`Found match by invoice_id: ${invoice_id}`);
           return true;
         }
 
         // Check for payment_id match
         if (payment_id && metadata.payment_id == payment_id) {
+          console.log(`Found match by payment_id: ${payment_id}`);
           return true;
         }
 

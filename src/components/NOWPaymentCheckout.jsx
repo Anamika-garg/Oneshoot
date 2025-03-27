@@ -14,7 +14,7 @@ export default function NOWPaymentsCheckout({ amount, email, onClose }) {
   const router = useRouter();
   const { cart, clearCart, appliedPromo, recordPromoUsage } = useCart();
 
-  const createOrder = async (invoiceId) => {
+  const createOrder = async (invoiceId, orderId) => {
     try {
       const {
         data: { user },
@@ -27,8 +27,8 @@ export default function NOWPaymentsCheckout({ amount, email, onClose }) {
         return false;
       }
 
-      // Generate a unique order reference
-      const orderGroupId = `order_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+      // Use the passed orderId as the orderGroupId for consistency
+      const orderGroupId = orderId;
 
       // Create pending orders for each cart item
       for (const item of cart) {
@@ -46,6 +46,7 @@ export default function NOWPaymentsCheckout({ amount, email, onClose }) {
             needed: item.quantity,
             orderGroupId: orderGroupId,
             nowpayments_invoice_id: invoiceId,
+            order_id: orderId,
             email: email,
           }),
         });
@@ -106,7 +107,7 @@ export default function NOWPaymentsCheckout({ amount, email, onClose }) {
       const { invoiceUrl, invoiceId } = await response.json();
 
       // Create order records in pending state
-      const orderGroupId = await createOrder(invoiceId);
+      const orderGroupId = await createOrder(invoiceId, orderId);
 
       if (!orderGroupId) {
         throw new Error("Failed to create order records");
